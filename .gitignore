@@ -1,9 +1,5 @@
 .DS_Store
-target/classes/
-target/inject-tests/
-target/jenkins-for-test/
-target/rally-update-plugin-1.hpi
-target/rally-update-plugin-1.jar
-target/rally-update-plugin-1/
-target/surefire-reports/
-target/test-classes/
+target
+work
+*.iml
+.idea
