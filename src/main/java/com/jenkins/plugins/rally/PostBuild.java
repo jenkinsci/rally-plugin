@@ -5,27 +5,16 @@ import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
-import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 
 import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import com.jenkins.plugins.rally.connector.RallyAttributes;
 import com.jenkins.plugins.rally.connector.RallyConnector;
 import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
-import com.jenkins.plugins.rally.scm.BuildDetails;
 import com.jenkins.plugins.rally.scm.ChangeInformation;
 import com.jenkins.plugins.rally.scm.Changes;
 
@@ -35,9 +24,8 @@ import com.jenkins.plugins.rally.scm.Changes;
  * @author Tushar Shinde
  */
 public class PostBuild extends Builder {
-
-	private final String userName;
-	private final String password;
+    private final String userName;
+	private final String apiKey;
 	private final String workspace;
 	private final String project;
 	private final String scmuri;
@@ -50,9 +38,9 @@ public class PostBuild extends Builder {
 
     // Fields in config.jelly must match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
-    public PostBuild(String userName, String password, String workspace, String project, String scmuri, String scmRepoName, String changesSince, String startDate, String endDate, String debugOn, String proxy) {
-        this.userName = userName;
-        this.password = password;
+    public PostBuild(String userName, String apiKey, String workspace, String project, String scmuri, String scmRepoName, String changesSince, String startDate, String endDate, String debugOn, String proxy) {
+		this.userName = userName;
+        this.apiKey = apiKey;
     	this.workspace = workspace;
     	this.project = project;
     	this.scmuri = scmuri;
@@ -73,7 +61,7 @@ public class PostBuild extends Builder {
     	RallyConnector rallyConnector = null;
     	boolean result;
     	try {
-    		rallyConnector = new RallyConnector(userName, password, workspace, project, scmuri, scmRepoName, proxy);
+    		rallyConnector = new RallyConnector(apiKey, workspace, scmuri, scmRepoName, proxy);
 	        for(ChangeInformation ci : changes.getChangeInformation()) { //build level
 	        	try {
 		        	for(Object item : ci.getChangeLogSet().getItems()) { //each changes in above build
@@ -146,8 +134,8 @@ public class PostBuild extends Builder {
 		return userName;
 	}
 
-	public String getPassword() {
-		return password;
+	public String getApiKey() {
+		return apiKey;
 	}
 
 	public String getWorkspace() {
