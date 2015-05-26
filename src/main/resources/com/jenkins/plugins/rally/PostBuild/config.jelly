@@ -6,7 +6,7 @@
   -->
 
   <f:entry title="Rally User Name" field="userName"><f:textbox /></f:entry>
-  <f:entry title="Rally Password" field="password"><f:password /></f:entry>
+  <f:entry title="API Key" field="apiKey"><f:password /></f:entry>
   <f:entry title="Rally Workspace" field="workspace"><f:textbox /></f:entry>
   <f:entry title="Rally Project" field="project"><f:textbox /> </f:entry>
   <f:entry title="SCM URI" field="scmuri"><f:textbox /> </f:entry>

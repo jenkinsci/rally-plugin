@@ -1,9 +1,10 @@
 package com.jenkins.plugins.rally.connector;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -20,16 +21,14 @@ import com.rallydev.rest.response.Response;
 import com.rallydev.rest.response.UpdateResponse;
 import com.rallydev.rest.util.Fetch;
 import com.rallydev.rest.util.QueryFilter;
-import java.net.URI;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.commons.lang3.text.StrSubstitutor;
 
 public class RallyConnector {
 	private final String userName;
-	private final String password;
+	private final String apiKey;
 	private final String workspace;
-	private final String project;
 	private final String scmuri;
+	private final String project;
 	private final String scmRepoName;	
 	
 	private final RallyRestApi restApi;
@@ -39,22 +38,43 @@ public class RallyConnector {
 	public static final String WSAPI_VERSION = "v2.0";
 	private String DEFAULT_REPO_NAME_CREATED_BY_PLUGIN = "plugin_repo";
 	
-	public RallyConnector(final String userName, final String password, final String workspace, final String project, final String scmuri, final String scmRepoName, final String proxy) throws URISyntaxException {
+	public RallyConnector(final String userName, final String apiKey, final String workspace, final String project, final String scmuri, final String scmRepoName, final String proxy) throws URISyntaxException {
 		this.userName = userName;
-        this.password = password;
+        this.apiKey = apiKey;
     	this.workspace = workspace;
     	this.project = project;
     	this.scmuri = scmuri;
     	this.scmRepoName = scmRepoName;
     	
-    	restApi = new RallyRestApi(new URI(RALLY_URL), userName, password);
+    	restApi = new RallyRestApi(new URI(RALLY_URL), apiKey);
     	restApi.setWsapiVersion(WSAPI_VERSION);
         restApi.setApplicationName(APPLICATION_NAME);
         if(proxy != null && proxy.trim().length() > 0){
-            restApi.setProxy(new URI(proxy));
+            initializeProxy(proxy);
         }
 	}
-	
+
+	private void initializeProxy(String proxy) throws URISyntaxException {
+		URI proxyUri = new URI(proxy);
+		String userInfo = proxyUri.getUserInfo();
+
+		if (userInfo != null && !userInfo.isEmpty()) {
+            if (userInfo.contains(":")) {
+                String[] tokens = userInfo.split(":");
+                if (tokens.length != 2) {
+                    throw new URISyntaxException(proxy, "The URI must have a userName and a apiKey (or neither)");
+                }
+                String username = tokens[0];
+                String passwd = tokens[1];
+                restApi.setProxy(proxyUri, username, passwd);
+            } else {
+                throw new URISyntaxException(proxy, "Unable to set userName on proxy URI without apiKey");
+            }
+        } else {
+            restApi.setProxy(proxyUri);
+        }
+	}
+
 	public void closeConnection() throws IOException {
 		restApi.close();
 	}
@@ -67,12 +87,23 @@ public class RallyConnector {
     	printWarnningsOrErrors(createResponse, rdto, "updateRallyChangeSet.CreateChangeSet");
 	    String csRef = createResponse.getObject().get("_ref").getAsString();	    
 	    for(int i=0; i<rdto.getFileNameAndTypes().length;i++) {
-	    	JsonObject newChange = createChange(csRef, rdto.getFileNameAndTypes()[i][0], rdto.getFileNameAndTypes()[i][1]);	    
+            String fileName = rdto.getFileNameAndTypes()[i][0];
+            String fileType = rdto.getFileNameAndTypes()[i][1];
+            String revision = rdto.getRevison();
+            JsonObject newChange = createChange(csRef, fileName, fileType, revision);
 	    	CreateRequest cRequest = new CreateRequest("change", newChange);
 	    	CreateResponse cResponse = restApi.create(cRequest);
     		printWarnningsOrErrors(cResponse, rdto, "updateRallyChangeSet. CreateChange");
 	    }
 	    return createResponse.wasSuccessful();
+    }
+
+	private String resolveScmUri(String revision) {
+        Map<String, String> values = new HashMap<String, String>();
+        values.put("revision", revision);
+
+        StrSubstitutor substitutor = new StrSubstitutor(values, "${", "}");
+        return substitutor.replace(this.scmuri);
     }
 	
 	private JsonObject createChangeSet(RallyDetailsDTO rdto) throws IOException {
@@ -81,7 +112,7 @@ public class RallyConnector {
         newChangeset.add("SCMRepository", scmJsonObject); 
         //newChangeset.addProperty("Author", createUserRef());
        	newChangeset.addProperty("Revision", rdto.getRevison());
-        newChangeset.addProperty("Uri", scmuri);
+        newChangeset.addProperty("Uri", resolveScmUri(rdto.getRevison()));
         newChangeset.addProperty("CommitTimestamp", rdto.getTimeStamp());
         newChangeset.addProperty("Message", rdto.getMsg());
         //newChangeset.addProperty("Builds", createBuilds());        
@@ -120,11 +151,11 @@ public class RallyConnector {
 		return defectJsonObject;
 	}
 	
-	private JsonObject createChange(String csRef, String fileName, String fileType) {
+	private JsonObject createChange(String csRef, String fileName, String fileType, String revision) {
 		JsonObject newChange = new JsonObject();
 	    newChange.addProperty("PathAndFilename", fileName);
 	    newChange.addProperty("Action", fileType);	    
-	    newChange.addProperty("Uri", scmuri);
+	    newChange.addProperty("Uri", resolveScmUri(revision));
         newChange.addProperty("Changeset", csRef);
         return newChange;
 	}
@@ -227,7 +258,7 @@ public class RallyConnector {
 	
 	private String getAnyOtherRepoName(RallyDetailsDTO rdto) throws IOException {
 		QueryRequest scmRequest = new QueryRequest("SCMRepository");
-        scmRequest.setFetch(new Fetch("ObjectID","Name","Name"));        
+        scmRequest.setFetch(new Fetch("ObjectID", "Name", "Name"));
         scmRequest.setWorkspace(workspace);
         String anyOtherRepoName = "";
         try {
@@ -263,7 +294,7 @@ public class RallyConnector {
 		newSCMRepository.addProperty("Name", DEFAULT_REPO_NAME_CREATED_BY_PLUGIN);
         newSCMRepository.addProperty("SCMType", "GIT");
         if(!StringUtils.isBlank(scmuri))
-        	newSCMRepository.addProperty("Uri", scmuri);
+        	newSCMRepository.addProperty("Uri", resolveScmUri(rdto.getRevison()));
         CreateRequest createRequest = new CreateRequest("SCMRepository", newSCMRepository);
         System.out.println(createRequest.getBody());
         CreateResponse createResponse = restApi.create(createRequest);
