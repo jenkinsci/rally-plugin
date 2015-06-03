@@ -12,16 +12,16 @@ import java.net.URISyntaxException;
  */
 public class PostBuild {
     private String userName;
-   	private String password;
-   	private String workspace;
-   	private String project;
-   	private String scmuri;
-   	private String scmRepoName;
-   	private String changesSince;
-   	private String startDate;
-   	private String endDate;
-   	private String debugOn;
-   	private String proxy;
+    private String password;
+    private String workspace;
+    private String project;
+    private String scmuri;
+    private String scmRepoName;
+    private String changesSince;
+    private String startDate;
+    private String endDate;
+    private String debugOn;
+    private String proxy;
 
     /**
      * Called when this is read from persisted form.
@@ -30,9 +30,9 @@ public class PostBuild {
     public RallyPlugin readResolve() {
         try {
             return new RallyPlugin(
-                "Pleasse set valid API key for "+userName,
-                workspace, scmRepoName,
-                null, null, null, null,null,null // TODO
+                    "Pleasse set valid API key for " + userName,
+                    workspace, scmRepoName,
+                    null, null, null, null, null, null // TODO
             );
         } catch (Exception e) {
             // not sure what the right thing to do here.
