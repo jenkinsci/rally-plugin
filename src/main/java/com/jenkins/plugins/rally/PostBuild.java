@@ -1,14 +1,12 @@
 package com.jenkins.plugins.rally;
 
-import hudson.model.Build;
-
-import java.net.URISyntaxException;
-
 /**
  * Shim to assist data migration.
  * 
  * @author Tushar Shinde
  * @author Kohsuke Kawaguchi
+ * @deprecated
+ *      The logic has been refactored to {@link RallyPlugin}
  */
 public class PostBuild {
     private String userName;
