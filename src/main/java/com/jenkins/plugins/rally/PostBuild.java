@@ -2,6 +2,8 @@ package com.jenkins.plugins.rally;
 
 import hudson.model.Build;
 
+import java.net.URISyntaxException;
+
 /**
  * Shim to assist data migration.
  * 
@@ -21,7 +23,20 @@ public class PostBuild {
    	private String debugOn;
    	private String proxy;
 
+    /**
+     * Called when this is read from persisted form.
+     * Create equivalent {@link RallyPlugin} instance.
+     */
     public RallyPlugin readResolve() {
-        throw new UnsupportedOperationException();
+        try {
+            return new RallyPlugin(
+                "Pleasse set valid API key for "+userName,
+                workspace, scmRepoName,
+                null, null, null, null,null,null // TODO
+            );
+        } catch (Exception e) {
+            // not sure what the right thing to do here.
+            return null;
+        }
     }
 }
