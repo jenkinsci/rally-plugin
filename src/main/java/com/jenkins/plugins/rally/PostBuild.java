@@ -8,6 +8,7 @@ package com.jenkins.plugins.rally;
  * @deprecated
  *      The logic has been refactored to {@link RallyPlugin}
  */
+@Deprecated
 public class PostBuild {
     private String userName;
     private String password;

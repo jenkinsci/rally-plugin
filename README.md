@@ -1,6 +1,4 @@
-## Rally Bookkeeper
-[![Build Status](https://travis-ci.org/mike-rogers/rally-bookkeeper.svg)](https://travis-ci.org/mike-rogers/rally-bookkeeper)
-[![Coverage Status](https://coveralls.io/repos/mike-rogers/rally-bookkeeper/badge.svg)](https://coveralls.io/r/mike-rogers/rally-bookkeeper)
+## Rally Plugin
 
 This is a Jenkins Plug-in which
 
@@ -8,7 +6,7 @@ This is a Jenkins Plug-in which
 1. picks up Task details [status, actual hrs, todo hrs etc] from scm comments (if provided) and updates rally task details accordingly.
 1. saves developers the effort of writing, installing, and maintaining check-in hooks for SCM tools (svn, cvs, perforce etc) in order to update Rally changsets, a task which is especially difficult if your organisation uses more than one configuration management tool.
 
-For more information, please see the [project page](https://mike-rogers.github.io/rally-bookkeeper).
+For more information, please see the [project page](https://jenkinsci.github.io/rally-plugin).
 
 ## Development
 
@@ -21,9 +19,7 @@ Here is a list of maven tasks that I use on this project:
 * **mvn hpi:run -Djetty.port=8090**: runs the Jenkins server (with the plugin pre-loaded) on port 8090
 * **mvn cobertura:cobertura**: runs all the tests, gathering code coverage metrics
 * **mvn org.pitest:pitest-maven:mutationCoverage**: runs [Pitest](http://pitest.org/) mutation coverage
-* **mvn org.pitest:pitest-maven:scmMutationCoverage -Dinclude=ADDED,UNKNOWN,MODIFIED -DmutationThreshold=85**: runs Pitest mutation coverage only on modified files, failing if the threshold is below 85%
-
-... my kingdom for `rake -T`...
+* **mvn org.pitest:pitest-maven:scmMutationCoverage -Dinclude=ADDED,UNKNOWN,MODIFIED -DmutationThreshold=85**: runs PITest mutation coverage only on modified files, failing if the threshold is below 85%
 
 ## License
 
