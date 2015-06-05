@@ -1,0 +1,17 @@
+name: Jenkins Plugin
+markdown: redcarpet
+highlighter: pygments
+github: https://github.com/jenkinsci/rally-plugin
+baseurl: /rally-plugin
+
+exclude: ["work"]
+
+urls:
+  - text: github
+    url: https://github.com/jenkinsci/rally-plugin
+  - text: issues
+    url: https://github.com/jenkinsci/rally-plugin/issues
+  - text: jenkins ci
+    url: https://jenkins-ci.org
+  - text: rally dev
+    url: https://www.rallydev.com

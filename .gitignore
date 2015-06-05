@@ -1,0 +1,12 @@
+# EMACS YEAH
+*~
+
+# less exciting things
+_site
+target
+.DS_Store
+target
+**/*.iml
+.idea/
+rally-plugin.iml
+work
