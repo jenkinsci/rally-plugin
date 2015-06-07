@@ -56,10 +56,6 @@
         </select>
     </f:entry>
 
-    <f:entry title="Turn on debug level?" field="advancedIsDebugOn">
-        <f:checkbox value="${it.isDebugOn}"/>
-    </f:entry>
-
     <f:entry title="Proxy URI" field="advancedProxyUri">
         <f:textbox/>
     </f:entry>

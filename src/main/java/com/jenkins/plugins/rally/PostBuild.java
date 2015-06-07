@@ -31,7 +31,7 @@ public class PostBuild {
             return new RallyPlugin(
                     "Pleasse set valid API key for " + userName,
                     workspace, scmRepoName,
-                    null, null, null, null, null, null // TODO
+                    null, null, null, null, null // TODO
             );
         } catch (Exception e) {
             // not sure what the right thing to do here.

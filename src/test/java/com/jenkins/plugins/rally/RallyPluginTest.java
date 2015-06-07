@@ -25,12 +25,11 @@ public class RallyPluginTest {
                 "scmCommitTemplate",
                 "scmFileTemplate",
                 "buildCaptureRange",
-                "advancedProxyUri",
-                "advancedIsDebugOn"
+                "advancedProxyUri"
         };
 
         FreeStyleProject p = jenkins.getInstance().createProject(FreeStyleProject.class, "testProject");
-        RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "true", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastBuild", "true", "http://proxy.url");
+        RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "true", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastBuild", "http://proxy.url");
         p.getBuildersList().add(before);
 
         jenkins.submit(jenkins.createWebClient().getPage(p,"configure").getFormByName("config"));
@@ -49,12 +48,11 @@ public class RallyPluginTest {
                 "scmCommitTemplate",
                 "scmFileTemplate",
                 "buildCaptureRange",
-                "advancedProxyUri",
-                "advancedIsDebugOn"
+                "advancedProxyUri"
         };
 
         FreeStyleProject p = jenkins.getInstance().createProject(FreeStyleProject.class, "testProject");
-        RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "false", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastSuccessfulBuild", "true", "http://proxy.url");
+        RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "false", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastSuccessfulBuild", "http://proxy.url");
         p.getBuildersList().add(before);
 
         jenkins.submit(jenkins.createWebClient().getPage(p,"configure").getFormByName("config"));

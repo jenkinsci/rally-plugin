@@ -47,14 +47,14 @@ public class RallyPlugin extends Builder {
     private String credentialsId;
 
     @DataBoundConstructor
-    public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedIsDebugOn, String advancedProxyUri) throws RallyException, URISyntaxException {
+    public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedProxyUri) throws RallyException, URISyntaxException {
         this.credentialsId = credentialsId;
         String rallyCredentials = getRallyCredentials(credentialsId);
 
         RallyConfiguration rally = new RallyConfiguration(rallyCredentials, rallyWorkspaceName, rallyScmName, shouldCreateIfAbsent);
         ScmConfiguration scm = new ScmConfiguration(scmCommitTemplate, scmFileTemplate);
         BuildConfiguration build = new BuildConfiguration(buildCaptureRange);
-        AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri, advancedIsDebugOn);
+        AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri);
 
         this.config = new RallyPluginConfiguration(rally, scm, build, advanced);
     }
@@ -173,10 +173,6 @@ public class RallyPlugin extends Builder {
 
     public String getBuildCaptureRange() {
         return this.config.getBuild().getCaptureRange();
-    }
-
-    public String getAdvancedIsDebugOn() {
-        return this.config.getAdvanced().getIsDebugOn();
     }
 
     public String getAdvancedProxyUri() {
