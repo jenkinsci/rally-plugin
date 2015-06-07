@@ -1,5 +1,8 @@
 package com.jenkins.plugins.rally;
 
+import hudson.tasks.Builder;
+import org.kohsuke.stapler.DataBoundConstructor;
+
 /**
  * Shim to assist data migration.
  * 
@@ -29,7 +32,7 @@ public class PostBuild {
     public RallyPlugin readResolve() {
         try {
             return new RallyPlugin(
-                    "Pleasse set valid API key for " + userName,
+                    "Please set valid API key for " + userName,
                     workspace, scmRepoName,
                     null, null, null, null, null // TODO
             );
