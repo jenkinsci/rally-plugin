@@ -3,15 +3,16 @@
          xmlns:d="jelly:define"
          xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson"
-         xmlns:f="/lib/form">
+         xmlns:f="/lib/form"
+         xmlns:c="/lib/credentials">
     <!--
       This jelly script is used for per-project configuration.
 
       See global.jelly for a general discussion about jelly script.
     -->
 
-    <f:entry title="Rally API Key" field="rallyApiKey">
-        <f:password/>
+    <f:entry title="Rally API Key" field="credentialsId">
+        <c:select/>
     </f:entry>
 
     <f:entry title="Rally Workspace Name" field="rallyWorkspaceName">
