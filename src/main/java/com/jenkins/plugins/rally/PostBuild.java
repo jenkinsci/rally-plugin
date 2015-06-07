@@ -32,9 +32,14 @@ public class PostBuild {
     public RallyPlugin readResolve() {
         try {
             return new RallyPlugin(
-                    "Please set valid API key for " + userName,
-                    workspace, scmRepoName,
-                    null, null, null, null, null // TODO
+                    "",
+                    workspace,
+                    scmRepoName,
+                    "false",
+                    "",
+                    "",
+                    "changesSinceLastSuccessfulBuild".equals(changesSince) ? "SinceLastSuccessfulBuild" : "SinceLastBuild",
+                    proxy
             );
         } catch (Exception e) {
             // not sure what the right thing to do here.
