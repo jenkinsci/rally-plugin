@@ -1,5 +1,7 @@
 ## Rally Plugin
 
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/rally-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/rally-plugin/)
+
 This is a Jenkins Plug-in which
 
 1. pulls SCM ChangeSet information from Jenkins Builds and updates relevant Rally defect or story as a build action.
