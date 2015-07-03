@@ -27,6 +27,24 @@ public final class CommitMessageParserTest {
     }
 
     @Test
+    public void shouldParseWorkItemFromMultiLineCommitMessage() {
+        String commitMessage = "Do a thing\nfixes US12345";
+
+        RallyDetailsDTO details = CommitMessageParser.parse(commitMessage);
+
+        assertThat(details.getId(), is(equalTo("US12345")));
+    }
+
+    @Test
+    public void shouldParseDefectFromMultiLineCommitMessage() {
+        String commitMessage = "fix a bug\ncorrects de12345";
+
+        RallyDetailsDTO details = CommitMessageParser.parse(commitMessage);
+
+        assertThat(details.getId(), is(equalTo("de12345")));
+    }
+
+    @Test
     public void shouldNotCatchOddballWorkItemCases() {
         String[] commitMessages = new String[]
                 {
@@ -72,9 +90,9 @@ public final class CommitMessageParserTest {
     public void shouldParseTaskStatusFromCommitMessage() {
         String[][] commitMessageAndStatusPairs = new String[][]
                 {
-                        { "US12345: #2 status: in progress", "In-Progress" },
-                        { "US12345: #2 status: complete", "Completed" },
-                        { "US12345: #2 status: define", "Defined" }
+                        { "US12345: #2\n status: in progress", "In-Progress" },
+                        { "US12345: #2\n status: complete", "Completed" },
+                        { "US12345: #2\n status: define", "Defined" }
                 };
 
         for (String[] pair : commitMessageAndStatusPairs) {
