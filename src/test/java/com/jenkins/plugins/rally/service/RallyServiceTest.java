@@ -5,7 +5,7 @@ import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.AdvancedConfiguration;
 import com.jenkins.plugins.rally.config.RallyConfiguration;
 import com.jenkins.plugins.rally.connector.RallyConnector;
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.scm.ScmConnector;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +40,9 @@ public class RallyServiceTest {
     public void shouldThrowErrorIfAttemptToUpdateWithoutValidStoryRef() throws Exception {
         when(this.connector.queryForStory("US12345")).thenThrow(new RallyAssetNotFoundException());
 
-        RallyDetailsDTO details = new RallyDetailsDTO();
-        details.setStory(true);
+        RallyUpdateData details = new RallyUpdateData();
         details.setTaskID("TA54321");
-        details.setId("US12345");
+        details.addId("US12345");
 
         this.service.updateRallyTaskDetails(details);
     }
@@ -53,8 +52,9 @@ public class RallyServiceTest {
         when(this.connector.queryForRepository()).thenThrow(new RallyAssetNotFoundException());
         when(this.rallyConfiguration.shouldCreateIfAbsent()).thenReturn(true);
 
-        RallyDetailsDTO details = new RallyDetailsDTO();
-        details.setFilenamesAndActions(new ArrayList<RallyDetailsDTO.FilenameAndAction>());
+        RallyUpdateData details = new RallyUpdateData();
+        details.addId("US12345");
+        details.setFilenamesAndActions(new ArrayList<RallyUpdateData.FilenameAndAction>());
         this.service.updateChangeset(details);
 
         verify(this.connector).createRepository();
@@ -65,8 +65,8 @@ public class RallyServiceTest {
         when(this.connector.queryForRepository()).thenThrow(new RallyAssetNotFoundException());
         when(this.rallyConfiguration.shouldCreateIfAbsent()).thenReturn(false);
 
-        RallyDetailsDTO details = new RallyDetailsDTO();
-        details.setFilenamesAndActions(new ArrayList<RallyDetailsDTO.FilenameAndAction>());
+        RallyUpdateData details = new RallyUpdateData();
+        details.setFilenamesAndActions(new ArrayList<RallyUpdateData.FilenameAndAction>());
         this.service.updateChangeset(details);
 
         verify(this.connector, never()).createRepository();

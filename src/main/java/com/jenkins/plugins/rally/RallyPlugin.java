@@ -11,7 +11,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
 import com.jenkins.plugins.rally.config.*;
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.credentials.RallyCredentials;
 import com.jenkins.plugins.rally.scm.ScmConnector;
 import com.jenkins.plugins.rally.service.RallyService;
@@ -94,7 +94,7 @@ public class RallyPlugin extends Builder {
         boolean shouldBuildSucceed = true;
         PrintStream out = listener.getLogger();
 
-        List<RallyDetailsDTO> detailsList;
+        List<RallyUpdateData> detailsList;
         try {
             detailsList = this.jenkinsConnector.getChanges(build, out);
         } catch (RallyException exception) {
@@ -102,24 +102,24 @@ public class RallyPlugin extends Builder {
             return false;
         }
 
-        for (RallyDetailsDTO details : detailsList) {
-            if (!details.getId().isEmpty()) {
-                try {
-                    this.rallyService.updateChangeset(details);
-                } catch (Exception e) {
-                    out.println("\trally update plug-in error: could not update changeset entry: " + e.getMessage());
-                    e.printStackTrace(out);
-                    shouldBuildSucceed = false;
-                }
+        for (RallyUpdateData details : detailsList) {
+            try {
+                this.rallyService.updateChangeset(details);
+            } catch (Exception e) {
+                out.println("\trally update plug-in error: could not update changeset entry: " + e.getMessage());
+                e.printStackTrace(out);
+                shouldBuildSucceed = false;
+            }
 
-                try {
-                    this.rallyService.updateRallyTaskDetails(details);
-                } catch (Exception e) {
-                    out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getMessage());
-                    e.printStackTrace(out);
-                    shouldBuildSucceed = false;
-                }
-            } else {
+            try {
+                this.rallyService.updateRallyTaskDetails(details);
+            } catch (Exception e) {
+                out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getMessage());
+                e.printStackTrace(out);
+                shouldBuildSucceed = false;
+            }
+
+            if (details.getIds().size() == 0) {
                 out.println("Could not update rally due to absence of id in a comment " + details.getMsg());
             }
         }
@@ -181,7 +181,7 @@ public class RallyPlugin extends Builder {
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.

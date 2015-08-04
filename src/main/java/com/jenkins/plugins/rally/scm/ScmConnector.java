@@ -1,7 +1,7 @@
 package com.jenkins.plugins.rally.scm;
 
 import com.jenkins.plugins.rally.RallyException;
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import hudson.model.AbstractBuild;
 
 import java.io.PrintStream;
@@ -11,5 +11,5 @@ public interface ScmConnector {
     String getRevisionUriFor(String revision);
     String getFileUriFor(String revision, String filename);
 
-    List<RallyDetailsDTO> getChanges(AbstractBuild build, PrintStream out) throws RallyException;
+    List<RallyUpdateData> getChanges(AbstractBuild build, PrintStream out) throws RallyException;
 }

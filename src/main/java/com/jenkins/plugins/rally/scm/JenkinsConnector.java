@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.BuildConfiguration;
 import com.jenkins.plugins.rally.config.ScmConfiguration;
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.utils.CommitMessageParser;
 import com.jenkins.plugins.rally.utils.TemplatedUriResolver;
 import hudson.model.AbstractBuild;
@@ -32,7 +32,7 @@ public class JenkinsConnector implements ScmConnector {
         this.buildConfig = buildConfig;
     }
 
-    public List<RallyDetailsDTO> getChanges(AbstractBuild build, PrintStream out) throws RallyException {
+    public List<RallyUpdateData> getChanges(AbstractBuild build, PrintStream out) throws RallyException {
         Changes changes;
         // TODO: if a third is added it might be time to inheritance it up
         switch(this.buildConfig.getCaptureRangeAsEnum()) {
@@ -46,7 +46,7 @@ public class JenkinsConnector implements ScmConnector {
                 throw new RallyException("Looking at invalid capture range");
         }
 
-        List<RallyDetailsDTO> detailsBeans = new ArrayList<RallyDetailsDTO>();
+        List<RallyUpdateData> detailsBeans = new ArrayList<RallyUpdateData>();
         for (ChangeInformation info : changes.getChangeInformation()) {
             for (Object item : info.getChangeLogSet().getItems()) {
                 ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
@@ -70,19 +70,18 @@ public class JenkinsConnector implements ScmConnector {
         return new Changes(build, run != null ? run.getNumber() + 1 : build.getNumber());
     }
 
-    private RallyDetailsDTO createRallyDetailsDTO(
+    private RallyUpdateData createRallyDetailsDTO(
             ChangeInformation changeInformation,
             ChangeLogSet.Entry changeLogEntry,
             AbstractBuild build,
             PrintStream out) {
         String message = changeLogEntry.getMsg();
-        RallyDetailsDTO details = CommitMessageParser.parse(message);
+        RallyUpdateData details = CommitMessageParser.parse(message);
         details.setOrigBuildNumber(changeInformation.getBuildNumber());
         details.setCurrentBuildNumber(String.valueOf(build.number));
         details.setMsg(getMessage(changeLogEntry, details.getOrigBuildNumber(), details.getCurrentBuildNumber()));
         details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry));
         details.setOut(out);
-        details.setStory(details.getId().startsWith("US"));
         details.setRevision(changeLogEntry.getCommitId());
 
         if (changeLogEntry.getTimestamp() == -1) {
@@ -102,10 +101,10 @@ public class JenkinsConnector implements ScmConnector {
         return msg;
     }
 
-    private List<RallyDetailsDTO.FilenameAndAction> getFileNameAndTypes(ChangeLogSet.Entry cse) {
-        List<RallyDetailsDTO.FilenameAndAction> list = new ArrayList<RallyDetailsDTO.FilenameAndAction>();
+    private List<RallyUpdateData.FilenameAndAction> getFileNameAndTypes(ChangeLogSet.Entry cse) {
+        List<RallyUpdateData.FilenameAndAction> list = new ArrayList<RallyUpdateData.FilenameAndAction>();
         for(ChangeLogSet.AffectedFile files : cse.getAffectedFiles()) {
-            RallyDetailsDTO.FilenameAndAction filenameAndAction = new RallyDetailsDTO.FilenameAndAction();
+            RallyUpdateData.FilenameAndAction filenameAndAction = new RallyUpdateData.FilenameAndAction();
             filenameAndAction.filename = files.getPath();
             filenameAndAction.action = files.getEditType();
 

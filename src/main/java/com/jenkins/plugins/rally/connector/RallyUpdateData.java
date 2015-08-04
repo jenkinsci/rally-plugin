@@ -5,16 +5,36 @@ import hudson.scm.EditType;
 import java.io.PrintStream;
 import java.util.List;
 
-public class RallyDetailsDTO {
+import static com.google.common.collect.Lists.newArrayList;
+
+public class RallyUpdateData {
+
     public static class FilenameAndAction {
         public String filename;
         public EditType action;
     }
 
+    public static class RallyId {
+        private String name;
+
+        public RallyId(String id) {
+            this.name = id;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public boolean isStory() {
+            return this.name.toLowerCase().startsWith("us");
+        }
+    }
+
     private String msg;
+
     private String revision;
     private String timeStamp;
-    private String id;
+    private List<RallyId> ids = newArrayList();
     private List<FilenameAndAction> filenamesAndActions;
     private PrintStream out;
     private String origBuildNumber;
@@ -25,7 +45,6 @@ public class RallyDetailsDTO {
     private String taskToDO = "";
     private String taskEstimates = "";
     private String taskActuals = "";
-    private boolean story;
 
     public String getMsg() {
         return msg;
@@ -48,11 +67,16 @@ public class RallyDetailsDTO {
     public void setTimeStamp(String timeStamp) {
         this.timeStamp = timeStamp;
     }
-    public String getId() {
-        return id;
+    public List<RallyId> getIds() {
+        return ids;
     }
-    public void setId(String id) {
-        this.id = id;
+    public void addId(String id) {
+        this.ids.add(new RallyId(id));
+    }
+    public void addIds(List<String> ids) {
+        for (String id : ids) {
+            this.ids.add(new RallyId(id));
+        }
     }
     public List<FilenameAndAction> getFilenamesAndActions() {
         return filenamesAndActions;
@@ -113,11 +137,5 @@ public class RallyDetailsDTO {
     }
     public void setTaskActuals(String taskActuals) {
         this.taskActuals = taskActuals;
-    }
-    public boolean isStory() {
-        return story;
-    }
-    public void setStory(boolean story) {
-        this.story = story;
     }
 }

@@ -2,7 +2,7 @@ package com.jenkins.plugins.rally.scm;
 
 import com.jenkins.plugins.rally.config.BuildConfiguration;
 import com.jenkins.plugins.rally.config.ScmConfiguration;
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import hudson.model.AbstractBuild;
 import hudson.scm.ChangeLogSet;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class JenkinsConnectorTest {
         BuildConfiguration buildConfiguration = new BuildConfiguration("SinceLastBuild");
         ScmConnector connector = new JenkinsConnector(scmConfiguration, buildConfiguration);
 
-        List<RallyDetailsDTO> detailsList = connector.getChanges(build, null);
+        List<RallyUpdateData> detailsList = connector.getChanges(build, null);
 
         assertThat(detailsList, hasSize(1));
     }
@@ -96,7 +96,7 @@ public class JenkinsConnectorTest {
         BuildConfiguration buildConfiguration = new BuildConfiguration("SinceLastSuccessfulBuild");
         ScmConnector connector = new JenkinsConnector(scmConfiguration, buildConfiguration);
 
-        List<RallyDetailsDTO> detailsList = connector.getChanges(build, null);
+        List<RallyUpdateData> detailsList = connector.getChanges(build, null);
 
         assertThat(detailsList, hasSize(2));
     }

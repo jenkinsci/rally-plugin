@@ -1,14 +1,17 @@
 package com.jenkins.plugins.rally.utils;
 
-import com.jenkins.plugins.rally.connector.RallyDetailsDTO;
+import com.jenkins.plugins.rally.connector.RallyUpdateData;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.google.common.collect.Lists.newArrayList;
+
 public final class CommitMessageParser {
-    public static RallyDetailsDTO parse(String commitMessage) {
-        RallyDetailsDTO details = new RallyDetailsDTO();
-        details.setId(getWorkItemFromCommitMessage(commitMessage));
+    public static RallyUpdateData parse(String commitMessage) {
+        RallyUpdateData details = new RallyUpdateData();
+        details.addIds(getWorkItemFromCommitMessage(commitMessage));
         details.setTaskID(getTaskItemFromCommitMessage(commitMessage));
         details.setTaskIndex(getTaskIndexFromCommitMessage(commitMessage));
         details.setTaskActuals(getTaskActualsFromCommitMessage(commitMessage));
@@ -23,8 +26,8 @@ public final class CommitMessageParser {
         return details;
     }
 
-    private static String getWorkItemFromCommitMessage(String commitMessage) {
-        return executeRegularExpression("\\b((?:US|DE)\\d+)\\b", commitMessage);
+    private static List<String> getWorkItemFromCommitMessage(String commitMessage) {
+        return executeRegularExpressionReturningList("\\b((?:US|DE)\\d+)\\b", commitMessage);
     }
 
     private static String getTaskItemFromCommitMessage(String commitMessage) {
@@ -74,5 +77,17 @@ public final class CommitMessageParser {
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(commitMessage);
         return matcher.find() ? matcher.group(1) : "";
+    }
+
+    private static List<String> executeRegularExpressionReturningList(String regex, String commitMessage) {
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(commitMessage);
+        List<String> matches = newArrayList();
+
+        while (matcher.find()) {
+            matches.add(matcher.group(1));
+        }
+
+        return matches;
     }
 }
