@@ -22,7 +22,7 @@ import static com.jenkins.plugins.rally.utils.JsonElementBuilder.thatReferencesO
 public class RallyConnector {
     public static class FactoryHelper {
 
-        RallyRestApi createConnection(String uriAsString, String apiKey) throws URISyntaxException {
+        public RallyRestApi createConnection(String uriAsString, String apiKey) throws URISyntaxException {
             return new RallyRestApi(new URI(uriAsString), apiKey);
         }
     }
