@@ -18,7 +18,6 @@ import com.rallydev.rest.request.CreateRequest;
 import com.rallydev.rest.request.QueryRequest;
 import com.rallydev.rest.response.CreateResponse;
 import com.rallydev.rest.response.QueryResponse;
-import cucumber.api.java.en.And;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
@@ -34,16 +33,19 @@ import static org.mockito.Mockito.*;
 public class EnableRepositoryCreateSteps {
     private RallyService rallyService;
     private Exception caughtException;
-    private QueryResponse noExistingRepositoryObjectQueryResponse;
+    private QueryResponse preexistingRepositoryObjectQueryResponse;
     private RallyRestApi rallyApi;
 
     @Given("^a build that is configured not to create an SCMRepository object$")
     public void a_build_that_is_configured_not_to_create_an_SCMRepository_object() throws Throwable {
-        RallyConnector.FactoryHelper factoryHelper = mock(RallyConnector.FactoryHelper.class);
         rallyApi = mock(RallyRestApi.class);
-        noExistingRepositoryObjectQueryResponse = mock(QueryResponse.class);
-        when(rallyApi.query(argThat(new IsQueryRequestForRepository()))).thenReturn(noExistingRepositoryObjectQueryResponse);
+
+        RallyConnector.FactoryHelper factoryHelper = mock(RallyConnector.FactoryHelper.class);
         when(factoryHelper.createConnection(anyString(), anyString())).thenReturn(rallyApi);
+
+        preexistingRepositoryObjectQueryResponse = mock(QueryResponse.class);
+        when(rallyApi.query(argThat(new IsQueryRequestForRepository()))).thenReturn(preexistingRepositoryObjectQueryResponse);
+
         RallyConfiguration rallyConfig = new RallyConfiguration("", "Workspace", "Scm", "false");
         RallyConnector rallyConnector = new RallyConnector(factoryHelper, rallyConfig, "", "", "");
         ScmConfiguration scmConfig = new ScmConfiguration("http://${revision}", "http://${revision}/${file}");
@@ -55,19 +57,24 @@ public class EnableRepositoryCreateSteps {
 
     @Given("^a build that is configured to create an SCMRepository object$")
     public void a_build_that_is_configured_to_create_an_SCMRepository_object() throws Throwable {
-        RallyConnector.FactoryHelper factoryHelper = mock(RallyConnector.FactoryHelper.class);
         rallyApi = mock(RallyRestApi.class);
-        noExistingRepositoryObjectQueryResponse = mock(QueryResponse.class);
+
+        RallyConnector.FactoryHelper factoryHelper = mock(RallyConnector.FactoryHelper.class);
         when(factoryHelper.createConnection(anyString(), anyString())).thenReturn(rallyApi);
-        when(rallyApi.query(argThat(new IsQueryRequestForRepository()))).thenReturn(noExistingRepositoryObjectQueryResponse);
+
+        preexistingRepositoryObjectQueryResponse = mock(QueryResponse.class);
+        when(rallyApi.query(argThat(new IsQueryRequestForRepository()))).thenReturn(preexistingRepositoryObjectQueryResponse);
+
         CreateResponse createRepositoryResponse = mock(CreateResponse.class);
         when(createRepositoryResponse.wasSuccessful()).thenReturn(true);
         when(createRepositoryResponse.getObject()).thenReturn(createRepositoryResponseObject());
         when(rallyApi.create(argThat(new IsCreateRequestForRepository()))).thenReturn(createRepositoryResponse);
+
         QueryResponse workspaceQueryResponse = mock(QueryResponse.class);
         when(workspaceQueryResponse.getTotalResultCount()).thenReturn(1);
-        when(workspaceQueryResponse.getResults()).thenReturn(createWorkspaceQueryResultsForRef());
+        when(workspaceQueryResponse.getResults()).thenReturn(createQueryResultsForRef());
         when(rallyApi.query(argThat(new IsQueryRequestForWorkspace()))).thenReturn(workspaceQueryResponse);
+
         RallyConfiguration rallyConfig = new RallyConfiguration("", "Workspace", "Scm", "true");
         RallyConnector rallyConnector = new RallyConnector(factoryHelper, rallyConfig, "", "", "");
         ScmConfiguration scmConfig = new ScmConfiguration("", "");
@@ -77,25 +84,15 @@ public class EnableRepositoryCreateSteps {
         this.rallyService = new RallyService(rallyConnector, scmConnector, advancedConfig, rallyConfig);
     }
 
-    private JsonObject createRepositoryResponseObject() {
-        JsonObject object = new JsonObject();
-        object.addProperty("_ref", "_ref");
-
-        return object;
-    }
-
-    private JsonArray createWorkspaceQueryResultsForRef() {
-        JsonArray array = new JsonArray();
-        JsonObject object = new JsonObject();
-        object.addProperty("_ref", "_ref");
-        array.add(object);
-
-        return array;
-    }
-
-    @And("^that SCMRepository object does not exist$")
+    @Given("^that SCMRepository object does not exist$")
     public void that_SCMRepository_object_does_not_exist() throws Throwable {
-        when(noExistingRepositoryObjectQueryResponse.getTotalResultCount()).thenReturn(0);
+        when(preexistingRepositoryObjectQueryResponse.getTotalResultCount()).thenReturn(0);
+    }
+
+    @Given("^that SCMRepository object already exists$")
+    public void that_SCMRepository_object_already_exists() throws Throwable {
+        when(preexistingRepositoryObjectQueryResponse.getTotalResultCount()).thenReturn(1);
+        when(preexistingRepositoryObjectQueryResponse.getResults()).thenReturn(createQueryResultsForRef());
     }
 
     @When("^a job is executed from the build$")
@@ -104,14 +101,17 @@ public class EnableRepositoryCreateSteps {
             RallyUpdateData details = new RallyUpdateData();
             details.setFilenamesAndActions(Lists.<RallyUpdateData.FilenameAndAction>newArrayList());
             details.addId("US12345");
+
             QueryResponse storyQueryResponse = mock(QueryResponse.class);
             when(storyQueryResponse.getTotalResultCount()).thenReturn(1);
-            when(storyQueryResponse.getResults()).thenReturn(createWorkspaceQueryResultsForRef());
+            when(storyQueryResponse.getResults()).thenReturn(createQueryResultsForRef());
             when(rallyApi.query(argThat(new IsQueryRequestForStory()))).thenReturn(storyQueryResponse);
+
             CreateResponse changesetCreateResponse = mock(CreateResponse.class);
             when(changesetCreateResponse.wasSuccessful()).thenReturn(true);
             when(changesetCreateResponse.getObject()).thenReturn(createRepositoryResponseObject());
             when(rallyApi.create(argThat(new IsCreateRequestForChangeset()))).thenReturn(changesetCreateResponse);
+
             this.rallyService.updateChangeset(details);
         } catch (Exception exception) {
             this.caughtException = exception;
@@ -129,10 +129,31 @@ public class EnableRepositoryCreateSteps {
         verify(rallyApi).create(argThat(new IsCreateRequestForRepository()));
     }
 
-    @And("^a request to create a Changeset object associated with the SCMRepository object should be sent$")
+    @Then("^a request to create a Changeset object associated with the SCMRepository object should be sent$")
     public void a_request_to_create_a_Changeset_object_associated_with_the_SCMRepository_object_should_be_sent() throws Throwable {
         verify(rallyApi).create(argThat(new IsCreateRequestForChangeset()));
         assertThat(this.caughtException, is(nullValue()));
+    }
+
+    @Then("^a request to create the SCMRepository object should not be sent$")
+    public void a_request_to_create_the_SCMRepository_object_should_not_be_sent() throws Throwable {
+        verify(rallyApi, never()).create(argThat(new IsCreateRequestForRepository()));
+    }
+
+    private JsonObject createRepositoryResponseObject() {
+        JsonObject object = new JsonObject();
+        object.addProperty("_ref", "_ref");
+
+        return object;
+    }
+
+    private JsonArray createQueryResultsForRef() {
+        JsonArray array = new JsonArray();
+        JsonObject object = new JsonObject();
+        object.addProperty("_ref", "_ref");
+        array.add(object);
+
+        return array;
     }
 
     class IsQueryRequestForRepository extends TypeSafeMatcher<QueryRequest> {
