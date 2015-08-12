@@ -1,6 +1,7 @@
 ## Rally Plugin
 
 [![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/rally-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/rally-plugin/)
+[![License](https://img.shields.io/github/license/jenkinsci/rally-plugin.svg](https://github.com/jenkinsci/rally-plugin/blob/master/LICENSE)
 
 This is a Jenkins Plug-in which
 
