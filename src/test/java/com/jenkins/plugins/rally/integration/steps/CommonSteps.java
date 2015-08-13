@@ -10,7 +10,6 @@ import com.jenkins.plugins.rally.utils.CommitMessageParser;
 import com.rallydev.rest.response.CreateResponse;
 import com.rallydev.rest.response.QueryResponse;
 import cucumber.api.java.en.When;
-import cucumber.runtime.java.guice.ScenarioScoped;
 
 import javax.inject.Inject;
 
@@ -18,7 +17,6 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ScenarioScoped
 public class CommonSteps {
     private final StepStateContainer stateContainer;
 
