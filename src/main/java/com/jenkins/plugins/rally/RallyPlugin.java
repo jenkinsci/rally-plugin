@@ -47,14 +47,14 @@ public class RallyPlugin extends Builder {
     private String credentialsId;
 
     @DataBoundConstructor
-    public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedProxyUri) throws RallyException, URISyntaxException {
+    public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedProxyUri, String shouldCaptureBuildStatus) throws RallyException, URISyntaxException {
         this.credentialsId = credentialsId;
         String rallyCredentials = getRallyCredentials(credentialsId);
 
         RallyConfiguration rally = new RallyConfiguration(rallyCredentials, rallyWorkspaceName, rallyScmName, shouldCreateIfAbsent);
         ScmConfiguration scm = new ScmConfiguration(scmCommitTemplate, scmFileTemplate);
         BuildConfiguration build = new BuildConfiguration(buildCaptureRange);
-        AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri);
+        AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri, shouldCaptureBuildStatus);
 
         this.config = new RallyPluginConfiguration(rally, scm, build, advanced);
     }
@@ -177,6 +177,10 @@ public class RallyPlugin extends Builder {
 
     public String getAdvancedProxyUri() {
         return this.config.getAdvanced().getProxyUri().toString();
+    }
+
+    public String getShouldCaptureBuildStatus() {
+        return this.config.getRally().shouldCreateIfAbsent().toString();
     }
 
     @Override

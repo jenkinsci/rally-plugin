@@ -53,7 +53,7 @@ public class MultipleStoryUpdateSteps {
         ScmConfiguration scmConfig = new ScmConfiguration("http://${revision}", "http://${revision}/${file}");
         BuildConfiguration buildConfig = new BuildConfiguration("SinceLastBuild");
         ScmConnector scmConnector = new JenkinsConnector(scmConfig, buildConfig);
-        AdvancedConfiguration advancedConfig = new AdvancedConfiguration("");
+        AdvancedConfiguration advancedConfig = new AdvancedConfiguration("", "false");
         this.stateContainer.setRallyService(new RallyService(rallyConnector, scmConnector, advancedConfig, rallyConfig));
     }
 

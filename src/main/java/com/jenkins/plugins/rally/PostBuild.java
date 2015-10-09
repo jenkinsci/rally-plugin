@@ -1,8 +1,5 @@
 package com.jenkins.plugins.rally;
 
-import hudson.tasks.Builder;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 /**
  * Shim to assist data migration.
  * 
@@ -39,7 +36,8 @@ public class PostBuild {
                     "",
                     "",
                     "changesSinceLastSuccessfulBuild".equals(changesSince) ? "SinceLastSuccessfulBuild" : "SinceLastBuild",
-                    proxy
+                    proxy,
+                    "false"
             );
         } catch (Exception e) {
             // not sure what the right thing to do here.

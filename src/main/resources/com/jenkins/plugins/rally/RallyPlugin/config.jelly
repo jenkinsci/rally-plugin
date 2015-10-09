@@ -60,4 +60,7 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Capture Build Status in Rally?" field="shouldCaptureBuildStatus">
+        <f:checkbox value="${it.shouldCaptureBuildStatus}"/>
+    </f:entry>
 </j:jelly>
