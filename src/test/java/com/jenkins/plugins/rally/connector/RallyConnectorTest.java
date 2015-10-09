@@ -1,9 +1,7 @@
 package com.jenkins.plugins.rally.connector;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.jenkins.plugins.rally.RallyAssetNotFoundException;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.RallyConfiguration;
@@ -26,6 +24,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.net.URI;
 
+import static com.jenkins.plugins.rally.utils.JsonMatcher.hasJsonPathValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
@@ -172,10 +171,15 @@ public class RallyConnectorTest {
 
         String ref = this.connector.createChangeset("_ref", "revision", "uri", "commitTimestamp", "message", "artifactRef");
 
-        JsonElement capturedJson = new JsonParser().parse(createCaptor.getValue().getBody());
-        JsonElement expectedJson = createJsonChangesetObject();
-        assertThat(capturedJson, is(equalTo(expectedJson)));
         assertThat(ref, is(equalTo("_ref")));
+
+        String json = createCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.Changeset.SCMRepository._ref", "_ref"));
+        assertThat(json, hasJsonPathValue("$.Changeset.Revision", "revision"));
+        assertThat(json, hasJsonPathValue("$.Changeset.Uri", "uri"));
+        assertThat(json, hasJsonPathValue("$.Changeset.CommitTimestamp", "commitTimestamp"));
+        assertThat(json, hasJsonPathValue("$.Changeset.Message", "message"));
+        assertThat(json, hasJsonPathValue("$.Changeset.Artifacts[0]._ref", "artifactRef"));
     }
 
     @Test(expected = RallyException.class)
@@ -197,10 +201,13 @@ public class RallyConnectorTest {
 
         String ref = this.connector.createChange("_ref", "file.txt", "create", "http://scm.org/file.txt");
 
-        JsonElement capturedJson = new JsonParser().parse(createCaptor.getValue().getBody());
-        JsonElement expectedJson = createJsonChangeObject();
-        assertThat(capturedJson, is(equalTo(expectedJson)));
         assertThat(ref, is(equalTo("_ref")));
+
+        String json = createCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.Change.Changeset._ref", "_ref"));
+        assertThat(json, hasJsonPathValue("$.Change.PathAndFilename", "file.txt"));
+        assertThat(json, hasJsonPathValue("$.Change.Action", "create"));
+        assertThat(json, hasJsonPathValue("$.Change.Uri", "http://scm.org/file.txt"));
     }
 
     @Test(expected = RallyException.class)
@@ -272,9 +279,11 @@ public class RallyConnectorTest {
         updateInfo.setTodo("2");
         this.connector.updateTask("https://rally1.rallydev.com/slm/webservice/v2.0/task/123456", updateInfo);
 
-        JsonElement capturedJson = new JsonParser().parse(requestCaptor.getValue().getBody());
-        JsonElement expectedJson = createJsonUpdateObject();
-        assertThat(capturedJson, is(equalTo(expectedJson)));
+        String json = requestCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.task.State", "In-Progress"));
+        assertThat(json, hasJsonPathValue("$.task.ToDo", "2"));
+        assertThat(json, hasJsonPathValue("$.task.Actuals", "1"));
+        assertThat(json, hasJsonPathValue("$.task.Estimate", "1"));
     }
 
     @Test
@@ -295,10 +304,12 @@ public class RallyConnectorTest {
 
         String ref = this.connector.createRepository();
 
-        JsonElement capturedJson = new JsonParser().parse(createCaptor.getValue().getBody());
-        JsonElement expectedJson = createJsonRepositoryObject();
-        assertThat(capturedJson, is(equalTo(expectedJson)));
         assertThat(ref, is(equalTo("_ref")));
+
+        String json = createCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.SCMRepository.Name", "SCM_NAME"));
+        assertThat(json, hasJsonPathValue("$.SCMRepository.Workspace", "_ref"));
+        assertThat(json, hasJsonPathValue("$.SCMRepository.SCMType", "Jenkins-Created"));
     }
 
     @Test(expected = RallyAssetNotFoundException.class)
@@ -322,75 +333,5 @@ public class RallyConnectorTest {
         object.addProperty("_ref", ref);
         array.add(object);
         return array;
-    }
-
-    private JsonObject createJsonRepositoryObject() {
-        JsonObject result = new JsonObject();
-
-        JsonObject repositoryObject = new JsonObject();
-        repositoryObject.addProperty("Name", SCM_NAME);
-        repositoryObject.addProperty("Workspace", "_ref");
-        repositoryObject.addProperty("SCMType", "Jenkins-Created");
-
-        result.add("SCMRepository", repositoryObject);
-
-        return result;
-    }
-
-    private JsonObject createJsonChangesetObject() {
-        JsonObject result = new JsonObject();
-
-        JsonObject changesetObject = new JsonObject();
-
-        JsonObject repositoryObject = new JsonObject();
-        repositoryObject.addProperty("_ref", "_ref");
-
-        JsonArray artifactArray = new JsonArray();
-        JsonObject artifactObject = new JsonObject();
-        artifactObject.addProperty("_ref", "artifactRef");
-        artifactArray.add(artifactObject);
-
-        changesetObject.add("SCMRepository", repositoryObject);
-        changesetObject.addProperty("Revision", "revision");
-        changesetObject.addProperty("Uri", "uri");
-        changesetObject.addProperty("CommitTimestamp", "commitTimestamp");
-        changesetObject.addProperty("Message", "message");
-        changesetObject.add("Artifacts", artifactArray);
-
-        result.add("Changeset", changesetObject);
-
-        return result;
-    }
-
-    private JsonObject createJsonChangeObject() {
-        JsonObject result = new JsonObject();
-
-        JsonObject changeObject = new JsonObject();
-
-        JsonObject changesetObject = new JsonObject();
-        changesetObject.addProperty("_ref", "_ref");
-
-        changeObject.add("Changeset", changesetObject);
-        changeObject.addProperty("PathAndFilename", "file.txt");
-        changeObject.addProperty("Action", "create");
-        changeObject.addProperty("Uri", "http://scm.org/file.txt");
-
-        result.add("Change", changeObject);
-
-        return result;
-    }
-
-    private JsonObject createJsonUpdateObject() {
-        JsonObject result = new JsonObject();
-
-        JsonObject taskObject = new JsonObject();
-        taskObject.addProperty("State", "In-Progress");
-        taskObject.addProperty("ToDo", "2");
-        taskObject.addProperty("Actuals", "1");
-        taskObject.addProperty("Estimate", "1");
-
-        result.add("task", taskObject);
-
-        return result;
     }
 }
