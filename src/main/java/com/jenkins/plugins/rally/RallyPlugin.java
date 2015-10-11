@@ -23,7 +23,8 @@ import hudson.model.BuildListener;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Builder;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import org.kohsuke.stapler.AncestorInPath;
@@ -40,7 +41,7 @@ import static com.google.common.collect.Lists.newArrayList;
  * @author Tushar Shinde
  * @author R. Michael Rogers
  */
-public class RallyPlugin extends Builder {
+public class RallyPlugin extends Publisher {
     private final RallyPluginConfiguration config;
     private RallyService rallyService;
     private ScmConnector jenkinsConnector;
@@ -180,7 +181,7 @@ public class RallyPlugin extends Builder {
     }
 
     public String getShouldCaptureBuildStatus() {
-        return this.config.getRally().shouldCreateIfAbsent().toString();
+        return this.config.getAdvanced().shouldCaptureBuildStatus().toString();
     }
 
     @Override
@@ -188,8 +189,12 @@ public class RallyPlugin extends Builder {
         return (DescriptorImpl) super.getDescriptor();
     }
 
+    public BuildStepMonitor getRequiredMonitorService() {
+        return BuildStepMonitor.NONE;
+    }
+
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
-    public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types

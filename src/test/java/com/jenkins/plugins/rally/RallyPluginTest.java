@@ -31,11 +31,11 @@ public class RallyPluginTest {
 
         FreeStyleProject p = jenkins.getInstance().createProject(FreeStyleProject.class, "testProject");
         RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "true", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastBuild", "http://proxy.url", "true");
-        p.getBuildersList().add(before);
+        p.getPublishersList().add(before);
 
         jenkins.submit(jenkins.createWebClient().getPage(p,"configure").getFormByName("config"));
 
-        RallyPlugin after = p.getBuildersList().get(RallyPlugin.class);
+        RallyPlugin after = p.getPublishersList().get(RallyPlugin.class);
 
         jenkins.assertEqualBeans(before, after, Joiner.on(',').join(keysToTest));
     }
@@ -55,11 +55,11 @@ public class RallyPluginTest {
 
         FreeStyleProject p = jenkins.getInstance().createProject(FreeStyleProject.class, "testProject");
         RallyPlugin before = new RallyPlugin(API_KEY, WORKSPACE_NAME, SCM_NAME, "false", COMMIT_URI_STRING, FILE_URI_STRING, "SinceLastSuccessfulBuild", "http://proxy.url", "false");
-        p.getBuildersList().add(before);
+        p.getPublishersList().add(before);
 
         jenkins.submit(jenkins.createWebClient().getPage(p,"configure").getFormByName("config"));
 
-        RallyPlugin after = p.getBuildersList().get(RallyPlugin.class);
+        RallyPlugin after = p.getPublishersList().get(RallyPlugin.class);
 
         jenkins.assertEqualBeans(before, after, Joiner.on(',').join(keysToTest));
     }

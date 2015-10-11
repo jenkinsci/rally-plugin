@@ -1,13 +1,16 @@
 package com.jenkins.plugins.rally.utils;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.jenkins.plugins.rally.RallyException;
 import com.rallydev.rest.RallyRestApi;
 import com.rallydev.rest.request.CreateRequest;
 import com.rallydev.rest.response.CreateResponse;
 
 import java.io.IOException;
+import java.util.List;
 
 public class RallyCreateBuilder {
     private JsonObject createObject;
@@ -26,6 +29,11 @@ public class RallyCreateBuilder {
     }
 
     public RallyCreateBuilder andProperty(String name, String value) {
+        this.createObject.addProperty(name, value);
+        return this;
+    }
+
+    public RallyCreateBuilder andProperty(String name, Number value) {
         this.createObject.addProperty(name, value);
         return this;
     }
@@ -50,5 +58,17 @@ public class RallyCreateBuilder {
         } catch (IOException exception) {
             throw new RallyException(exception);
         }
+    }
+
+    public RallyCreateBuilder andPropertyContainingArray(String name, List<String> values) {
+        JsonArray array = new JsonArray();
+        for (String value : values) {
+            JsonElement element = new JsonPrimitive(value);
+            array.add(element);
+        }
+
+        this.createObject.add(name, array);
+
+        return this;
     }
 }

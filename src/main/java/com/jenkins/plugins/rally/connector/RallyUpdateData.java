@@ -45,6 +45,53 @@ public class RallyUpdateData {
     private String taskToDO = "";
     private String taskEstimates = "";
     private String taskActuals = "";
+    private String buildUrl = "";
+    private String buildName = "Default Build Name";
+
+    public String getBuildName() {
+        return buildName;
+    }
+
+    public void setBuildName(String buildName) {
+        this.buildName = buildName;
+    }
+
+    public String getBuildStatus() {
+        return buildStatus;
+    }
+
+    public void setBuildStatus(String buildStatus) {
+        this.buildStatus = buildStatus;
+    }
+
+    private String buildStatus = "";
+
+    public String getBuildUrl() {
+        return buildUrl;
+    }
+
+    public void setBuildUrl(String buildUrl) {
+        this.buildUrl = buildUrl;
+    }
+
+    public double getBuildDuration() {
+        return buildDuration;
+    }
+
+    public void setBuildDuration(double buildDuration) {
+        this.buildDuration = buildDuration;
+    }
+
+    public String getBuildMessage() {
+        return buildMessage;
+    }
+
+    public void setBuildMessage(String buildMessage) {
+        this.buildMessage = buildMessage;
+    }
+
+    private double buildDuration = 0;
+    private String buildMessage = "";
 
     public String getMsg() {
         return msg;

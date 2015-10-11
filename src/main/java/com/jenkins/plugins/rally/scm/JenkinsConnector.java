@@ -11,6 +11,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
+import org.joda.time.DateTime;
 
 import java.io.PrintStream;
 import java.text.DateFormat;
@@ -82,7 +83,16 @@ public class JenkinsConnector implements ScmConnector {
         details.setMsg(getMessage(changeLogEntry, details.getOrigBuildNumber(), details.getCurrentBuildNumber()));
         details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry));
         details.setOut(out);
+        details.setBuildDuration((DateTime.now().getMillis() - build.getStartTimeInMillis()) / 1000D);
+        details.setBuildName(build.getProject().getName());
+        try {
+            details.setBuildUrl(build.getAbsoluteUrl());
+        } catch (Exception exception) {
+            // thrown if user hasn't configured jenkins root url; can ignore
+        }
         details.setRevision(changeLogEntry.getCommitId());
+        details.setBuildStatus(build.getResult().toString());
+        details.setBuildMessage("build for " + details.getBuildName() + " finished with status: " + details.getBuildStatus());
 
         if (changeLogEntry.getTimestamp() == -1) {
             details.setTimeStamp(changeInformation.getBuildTimeStamp());

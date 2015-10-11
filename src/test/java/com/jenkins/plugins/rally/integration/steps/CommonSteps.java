@@ -5,9 +5,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.integration.steps.matchers.IsCreateRequestForChangeset;
+import com.jenkins.plugins.rally.integration.steps.matchers.IsGetRequestForObject;
 import com.jenkins.plugins.rally.integration.steps.matchers.IsQueryRequestForStory;
 import com.jenkins.plugins.rally.utils.CommitMessageParser;
 import com.rallydev.rest.response.CreateResponse;
+import com.rallydev.rest.response.GetResponse;
 import com.rallydev.rest.response.QueryResponse;
 import cucumber.api.java.en.When;
 
@@ -41,6 +43,10 @@ public class CommonSteps {
             when(changesetCreateResponse.getObject()).thenReturn(createRepositoryResponseObject());
             when(stateContainer.getRallyApi().create(argThat(new IsCreateRequestForChangeset()))).thenReturn(changesetCreateResponse);
 
+            GetResponse getResponse = mock(GetResponse.class);
+            when(getResponse.getObject()).thenReturn(createGetResponseObject());
+            when(stateContainer.getRallyApi().get(argThat(new IsGetRequestForObject()))).thenReturn(getResponse);
+
             this.stateContainer.getRallyService().updateChangeset(details);
         } catch (Exception exception) {
             this.stateContainer.setCaughtException(exception);
@@ -61,5 +67,16 @@ public class CommonSteps {
         array.add(object);
 
         return array;
+    }
+
+    public static JsonObject createGetResponseObject() {
+        JsonObject object = new JsonObject();
+
+        JsonObject refObject = new JsonObject();
+        refObject.addProperty("_ref", "_ref");
+
+        object.add("Project", refObject);
+
+        return object;
     }
 }

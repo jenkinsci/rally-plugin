@@ -6,23 +6,24 @@ import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
 
-public class JsonMatcher extends TypeSafeMatcher<String> {
+public class JsonMatcher<T> extends TypeSafeMatcher<String> {
     private String jsonPath;
-    private String value;
+    private T value;
 
-    private JsonMatcher(String jsonPath, String value) {
+    private JsonMatcher(String jsonPath, T value) {
+        this.value = value;
         this.value = value;
         this.jsonPath = jsonPath;
     }
 
     @Factory
-    public static Matcher<String> hasJsonPathValue(String jsonPath, String value) {
-        return new JsonMatcher(jsonPath, value);
+    public static <T> Matcher<String> hasJsonPathValue(String jsonPath, T value) {
+        return new JsonMatcher<T>(jsonPath, value);
     }
 
     @Override
     protected boolean matchesSafely(String json) {
-        String actual = JsonPath.read(json, jsonPath);
+        Object actual = JsonPath.read(json, jsonPath);
         return value != null && value.equals(actual);
     }
 

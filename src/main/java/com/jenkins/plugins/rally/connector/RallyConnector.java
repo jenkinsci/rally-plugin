@@ -1,5 +1,6 @@
 package com.jenkins.plugins.rally.connector;
 
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.jenkins.plugins.rally.RallyException;
@@ -8,12 +9,15 @@ import com.jenkins.plugins.rally.utils.RallyCreateBuilder;
 import com.jenkins.plugins.rally.utils.RallyQueryBuilder;
 import com.jenkins.plugins.rally.utils.RallyUpdateBean;
 import com.rallydev.rest.RallyRestApi;
+import com.rallydev.rest.request.GetRequest;
 import com.rallydev.rest.request.UpdateRequest;
+import com.rallydev.rest.response.GetResponse;
 import com.rallydev.rest.response.UpdateResponse;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import static com.jenkins.plugins.rally.utils.JsonElementBuilder.anObjectWithProperty;
 import static com.jenkins.plugins.rally.utils.JsonElementBuilder.thatReferencesObject;
@@ -25,10 +29,13 @@ public class RallyConnector {
         public RallyRestApi createConnection(String uriAsString, String apiKey) throws URISyntaxException {
             return new RallyRestApi(new URI(uriAsString), apiKey);
         }
+
     }
+
     private final RallyRestApi rallyRestApi;
 
     private final RallyConfiguration rallyConfiguration;
+
     @Inject
     public RallyConnector(FactoryHelper factoryHelper,
                           RallyConfiguration rallyConfiguration,
@@ -46,7 +53,6 @@ public class RallyConnector {
 
         this.rallyConfiguration = rallyConfiguration;
     }
-
     public void configureProxy(URI uri) throws RallyException {
         if (uri == null || uri.getHost() == null) {
             return;
@@ -64,7 +70,6 @@ public class RallyConnector {
             this.rallyRestApi.setProxy(uri, usernamePassword[0], usernamePassword[1]);
         }
     }
-
     public void close() {
         try {
             this.rallyRestApi.close();
@@ -76,7 +81,6 @@ public class RallyConnector {
     public String queryForStory(String formattedId) throws RallyException {
         return this.queryForWorkItem("HierarchicalRequirement", formattedId);
     }
-
     public String queryForDefect(String formattedId) throws RallyException {
         return this.queryForWorkItem("Defect", formattedId);
     }
@@ -151,6 +155,15 @@ public class RallyConnector {
                 .andExecuteReturningRefFor("Change");
     }
 
+    public String queryForBuildDefinition(String name, String projectRef) throws RallyException {
+        return RallyQueryBuilder
+                .createQueryFrom(this.rallyRestApi)
+                .ofType("BuildDefinition")
+                .withQueryFilter("Name", "=", name)
+                .andQueryFilter("Project", "=", projectRef)
+                .andExecuteReturningRef();
+    }
+
     public void updateTask(String taskRef, RallyUpdateBean updateInfo) throws RallyException {
         UpdateRequest request = new UpdateRequest(taskRef, updateInfo.getJsonObject());
         try {
@@ -179,6 +192,40 @@ public class RallyConnector {
                 .andProperty("Workspace", workspaceRef)
                 .andProperty("SCMType", "Jenkins-Created")
                 .andExecuteReturningRefFor("SCMRepository");
+    }
+
+    public String createBuildDefinition(String name, String projectRef) throws RallyException {
+        return RallyCreateBuilder
+                .createObjectWith(this.rallyRestApi)
+                .andProperty("Name", name)
+                .andProperty("Project", projectRef)
+                .andExecuteReturningRefFor("BuildDefinition");
+    }
+
+    public String createBuild(String buildDefinitionRef, List<String> changesetRefs, String number, double duration, String start, String status, String message, String uri) throws RallyException {
+        return RallyCreateBuilder
+                .createObjectWith(this.rallyRestApi)
+                .andProperty("BuildDefinition", buildDefinitionRef)
+                .andPropertyContainingArray("Changesets", changesetRefs)
+                .andProperty("Number", number)
+                .andProperty("Duration", duration)
+                .andProperty("Start", start)
+                .andProperty("Message", message)
+                .andProperty("Status", status)
+                .andProperty("Uri", uri)
+                .andExecuteReturningRefFor("Build");
+    }
+
+    public String getObjectAndReturnInternalRef(String ref, String property) throws RallyException {
+        GetRequest getRequest = new GetRequest(ref);
+
+        try {
+            GetResponse getResponse = this.rallyRestApi.get(getRequest);
+            JsonObject object = getResponse.getObject();
+            return object.get(property).getAsJsonObject().get("_ref").getAsString();
+        } catch (IOException e) {
+            throw new RallyException(e);
+        }
     }
 
     private int getRallyIndexFor(Integer index) {

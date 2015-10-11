@@ -9,9 +9,11 @@ import com.jenkins.plugins.rally.utils.RallyQueryBuilder;
 import com.jenkins.plugins.rally.utils.RallyUpdateBean;
 import com.rallydev.rest.RallyRestApi;
 import com.rallydev.rest.request.CreateRequest;
+import com.rallydev.rest.request.GetRequest;
 import com.rallydev.rest.request.QueryRequest;
 import com.rallydev.rest.request.UpdateRequest;
 import com.rallydev.rest.response.CreateResponse;
+import com.rallydev.rest.response.GetResponse;
 import com.rallydev.rest.response.QueryResponse;
 import com.rallydev.rest.response.UpdateResponse;
 import com.rallydev.rest.util.QueryFilter;
@@ -24,6 +26,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.net.URI;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static com.jenkins.plugins.rally.utils.JsonMatcher.hasJsonPathValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -321,9 +324,93 @@ public class RallyConnectorTest {
         this.connector.createRepository();
     }
 
+    @Test
+    public void shouldQueryForBuildDefinitionByNameAndProject() throws Exception {
+        ArgumentCaptor<QueryRequest> requestCaptor = ArgumentCaptor.forClass(QueryRequest.class);
+        QueryResponse response = mock(QueryResponse.class);
+        when(response.getTotalResultCount()).thenReturn(1);
+        when(response.getResults()).thenReturn(createJsonArrayWithRef("_ref"));
+        when(this.rallyRestApi.query(requestCaptor.capture())).thenReturn(response);
+
+        String ref = this.connector.queryForBuildDefinition("buildDefinition", "_projectRef");
+
+        String expectedFilterString = new QueryFilter("Name", "=", "buildDefinition").and(new QueryFilter("Project", "=", "_projectRef")).toString();
+        assertThat(requestCaptor.getValue().getQueryFilter().toString(), is(equalTo(expectedFilterString)));
+        assertThat(ref, is(equalTo("_ref")));
+    }
+
+    @Test
+    public void shouldCreateBuildDefinitionWithName() throws Exception {
+        ArgumentCaptor<CreateRequest> createCaptor = ArgumentCaptor.forClass(CreateRequest.class);
+
+        CreateResponse response = mock(CreateResponse.class);
+        when(response.getObject()).thenReturn(createJsonObjectWithRef("_ref"));
+        when(response.wasSuccessful()).thenReturn(true);
+        when(this.rallyRestApi.create(createCaptor.capture())).thenReturn(response);
+
+        String ref = this.connector.createBuildDefinition("buildDefinition", "_projectRef");
+
+        assertThat(ref, is(equalTo("_ref")));
+
+        String json = createCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.BuildDefinition.Name", "buildDefinition"));
+        assertThat(json, hasJsonPathValue("$.BuildDefinition.Project", "_projectRef"));
+    }
+
+    @Test
+    public void shouldCreateBuild() throws Exception {
+        ArgumentCaptor<CreateRequest> createCaptor = ArgumentCaptor.forClass(CreateRequest.class);
+
+        CreateResponse response = mock(CreateResponse.class);
+        when(response.getObject()).thenReturn(createJsonObjectWithRef("_ref"));
+        when(response.wasSuccessful()).thenReturn(true);
+        when(this.rallyRestApi.create(createCaptor.capture())).thenReturn(response);
+
+        String ref = this.connector.createBuild(
+                "_buildDefinitionRef",
+                newArrayList("_changesetRef1", "_changesetRef2"),
+                "123",
+                0.123,
+                "2015-01-01T00:00:00.000Z",
+                "SUCCESS",
+                "message",
+                "http://build/123");
+
+        assertThat(ref, is(equalTo("_ref")));
+
+        String json = createCaptor.getValue().getBody();
+        assertThat(json, hasJsonPathValue("$.Build.BuildDefinition", "_buildDefinitionRef"));
+        assertThat(json, hasJsonPathValue("$.Build.Changesets[0]", "_changesetRef1"));
+        assertThat(json, hasJsonPathValue("$.Build.Changesets[1]", "_changesetRef2"));
+        assertThat(json, hasJsonPathValue("$.Build.Number", "123"));
+        assertThat(json, hasJsonPathValue("$.Build.Duration", 0.123));
+        assertThat(json, hasJsonPathValue("$.Build.Start", "2015-01-01T00:00:00.000Z"));
+        assertThat(json, hasJsonPathValue("$.Build.Status", "SUCCESS"));
+        assertThat(json, hasJsonPathValue("$.Build.Message", "message"));
+        assertThat(json, hasJsonPathValue("$.Build.Uri", "http://build/123"));
+    }
+
+    @Test
+    public void shouldGetStoryObjectAndReturnProjectRef() throws Exception {
+        ArgumentCaptor<GetRequest> requestCaptor = ArgumentCaptor.forClass(GetRequest.class);
+        GetResponse response = mock(GetResponse.class);
+        when(response.getObject()).thenReturn(createJsonObjectWithNestedObject("Project", "_ref"));
+        when(this.rallyRestApi.get(requestCaptor.capture())).thenReturn(response);
+
+        String ref = this.connector.getObjectAndReturnInternalRef("_ref", "Project");
+
+        assertThat(ref, is(equalTo("_ref")));
+    }
+
     private JsonObject createJsonObjectWithRef(String ref) {
         JsonObject object = new JsonObject();
         object.addProperty("_ref", ref);
+        return object;
+    }
+
+    private JsonObject createJsonObjectWithNestedObject(String propertyName, String internalRef) {
+        JsonObject object = new JsonObject();
+        object.add(propertyName, createJsonObjectWithRef(internalRef));
         return object;
     }
 
