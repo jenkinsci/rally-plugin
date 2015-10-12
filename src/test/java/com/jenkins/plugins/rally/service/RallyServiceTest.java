@@ -147,7 +147,7 @@ public class RallyServiceTest {
     }
 
     @Test
-    public void shouldCumulitivelyUpdateTaskActualHours() throws RallyException {
+    public void shouldCumulativelyUpdateTaskActualHours() throws RallyException {
         ArgumentCaptor<RallyUpdateBean> beanCaptor = ArgumentCaptor.forClass(RallyUpdateBean.class);
         RallyUpdateData details = new RallyUpdateData();
         details.addId("US12345");
@@ -169,7 +169,7 @@ public class RallyServiceTest {
     }
 
     @Test
-    public void shoudlUpdateTaskEstimate() throws RallyException {
+    public void shouldUpdateTaskEstimate() throws RallyException {
         ArgumentCaptor<RallyUpdateBean> beanCaptor = ArgumentCaptor.forClass(RallyUpdateBean.class);
         RallyUpdateData details = new RallyUpdateData();
         details.addId("US12345");
@@ -202,5 +202,53 @@ public class RallyServiceTest {
         this.service.updateRallyTaskDetails(details);
 
         verify(this.connector).updateTask(anyString(), any(RallyUpdateBean.class));
+    }
+
+    @Test
+    public void shouldCreateBuildDefinitionIfOneDoesNotExist() throws RallyException {
+        RallyUpdateData details = new RallyUpdateData();
+        details.addId("US12345");
+        details.setBuildName("buildName");
+        details.setFilenamesAndActions(new ArrayList<RallyUpdateData.FilenameAndAction>());
+
+        when(this.connector.getObjectAndReturnInternalRef(any(String.class), eq("Project")))
+                .thenReturn("_projectRef");
+        when(this.connector.queryForBuildDefinition(any(String.class), eq("_projectRef")))
+                .thenThrow(new RallyAssetNotFoundException());
+
+        this.service.updateChangeset(details);
+
+        verify(this.connector).createBuildDefinition("buildName", "_projectRef");
+    }
+
+    @Test
+    public void shouldCreateBuild() throws RallyException {
+        RallyUpdateData details = new RallyUpdateData();
+        details.addId("US12345");
+        details.setCurrentBuildNumber("123");
+        details.setBuildDuration(10.0D);
+        details.setTimeStamp("2015-01-01T00:00:00.000Z");
+        details.setBuildStatus("SUCCESS");
+        details.setBuildMessage("message");
+        details.setBuildUrl("uri");
+        details.setBuildName("buildName");
+        details.setFilenamesAndActions(new ArrayList<RallyUpdateData.FilenameAndAction>());
+
+        when(this.connector.getObjectAndReturnInternalRef(any(String.class), eq("Project")))
+                .thenReturn("_projectRef");
+        when(this.connector.queryForBuildDefinition(any(String.class), eq("_projectRef")))
+                .thenReturn("_buildDefinitionRef");
+
+        this.service.updateChangeset(details);
+
+        verify(this.connector).createBuild(
+                eq("_buildDefinitionRef"),
+                anyListOf(String.class),
+                eq("123"),
+                eq(10.0),
+                eq("2015-01-01T00:00:00.000Z"),
+                eq("SUCCESS"),
+                eq("message"),
+                eq("uri"));
     }
 }
