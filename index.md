@@ -24,7 +24,7 @@ Rally has moved to a token-based authentication instead of the old "username and
 
 Now that your credential is configure you'll want to include the plugin in your build by clicking the following:
 
-<img src="img/config-add-build.png" width="600">
+<img src="img/config-add-build.png" width="350">
 
 Once added, you'll be presented with the following:
 
@@ -33,11 +33,12 @@ Once added, you'll be presented with the following:
 * **Rally API Key**: Select the key you created at the beginning of the configuration section.
 * **Rally Workspace Name**: Your workspace has a name. It should go here.
 * **Rally Repository Name**: The name of the Repository object in Rally that you want the commits associated with. If you don't know what this is, just supply a generic value and check the checkbox for the "should create repository" configuration option.
-* **Create Repository if it doesn't already exist??**: If you're supplying a new repository name and you haven't manually created it, this is a great box to check.
+* **Create Repository if it doesn't already exist?**: If you're supplying a new repository name and you haven't manually created it, this is a great box to check.
 * **Commit URI**: Now we get to the fun stuff. This is a template of a URL that will be applied to all Changeset items (or "commits") that Rally adds. For example, if you're using GitHub, you may want your Changeset to link to `https://github.com/yourname/project-name/commit/[hash here]`. The way to do that is supply `https://github.com/yourname/project-name/commit/${revision}`.
 * **File URI**: This is the same template of a URL but will be applied to each individual file (Change) in the Changeset. For example, if you're using GitHub, you may want your Change to link to `https://github.com/yourname/project-name/blob/[hash-here]/src/filename.rb`. The way to do that is to supply `https://github.com/yourname/project-name/blob/${revision}/${file}`.
 * **Update Changes**: Select one from the dropdown.
 * **Proxy URI**: This is a URI representing an HTTP proxy, if your build system is behind a proxy. You can add a username/password pair using this syntax: `http://username:password@myproxy.com:12345`.
+* **Capture Build Status in Rally?** This option enables the collection of build statuses in Rally. Any story/defect references will automatically create a Build Definition for their associated project and you will start getting build status metrics in your Rally dashboard and reports.
 
 ### Commit Syntax (optional)
 Once you get the plugin configured you will likely need to change the way you author your commit statements.
