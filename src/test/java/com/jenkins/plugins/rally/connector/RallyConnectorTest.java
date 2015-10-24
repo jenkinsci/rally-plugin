@@ -49,7 +49,7 @@ public class RallyConnectorTest {
     @Before
     public void setUp() throws Exception {
         when(this.factoryHelper.createConnection(anyString(), anyString())).thenReturn(this.rallyRestApi);
-        RallyConfiguration rallyConfiguration = new RallyConfiguration("API_KEY", WORKSPACE_NAME, SCM_NAME, "false");
+        RallyConfiguration rallyConfiguration = new RallyConfiguration(WORKSPACE_NAME, SCM_NAME, "false");
         this.connector = new RallyConnector(factoryHelper, rallyConfiguration, "http://rally", "API VERSION", "APP NAME");
     }
 

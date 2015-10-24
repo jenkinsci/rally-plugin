@@ -3,14 +3,13 @@ package com.jenkins.plugins.rally.config;
 import com.google.inject.Inject;
 
 public class RallyConfiguration {
-    private final String apiKey;
+    private String apiKey;
     private final String workspaceName;
     private final String scmName;
     private final String shouldCreateIfAbsent;
 
     @Inject
-    public RallyConfiguration(String apiKey, String workspaceName, String scmName, String shouldCreateIfAbsent) {
-        this.apiKey = apiKey;
+    public RallyConfiguration(String workspaceName, String scmName, String shouldCreateIfAbsent) {
         this.workspaceName = workspaceName;
         this.scmName = scmName;
         this.shouldCreateIfAbsent = shouldCreateIfAbsent;
@@ -30,5 +29,9 @@ public class RallyConfiguration {
 
     public Boolean shouldCreateIfAbsent() {
         return Boolean.parseBoolean(this.shouldCreateIfAbsent);
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }

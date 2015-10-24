@@ -47,7 +47,7 @@ public class EnableRepositoryCreateSteps {
         this.stateContainer.setPreexistingRepositoryObjectQueryResponse(mock(QueryResponse.class));
         when(this.stateContainer.getRallyApi().query(argThat(new IsQueryRequestForRepository()))).thenReturn(this.stateContainer.getPreexistingRepositoryObjectQueryResponse());
 
-        RallyConfiguration rallyConfig = new RallyConfiguration("", "Workspace", "Scm", "false");
+        RallyConfiguration rallyConfig = new RallyConfiguration("Workspace", "Scm", "false");
         RallyConnector rallyConnector = new RallyConnector(factoryHelper, rallyConfig, "", "", "");
         ScmConfiguration scmConfig = new ScmConfiguration("http://${revision}", "http://${revision}/${file}");
         BuildConfiguration buildConfig = new BuildConfiguration("SinceLastBuild");
@@ -76,7 +76,7 @@ public class EnableRepositoryCreateSteps {
         when(workspaceQueryResponse.getResults()).thenReturn(CommonSteps.createQueryResultsForRef());
         when(this.stateContainer.getRallyApi().query(argThat(new IsQueryRequestForWorkspace()))).thenReturn(workspaceQueryResponse);
 
-        RallyConfiguration rallyConfig = new RallyConfiguration("", "Workspace", "Scm", "true");
+        RallyConfiguration rallyConfig = new RallyConfiguration("Workspace", "Scm", "true");
         RallyConnector rallyConnector = new RallyConnector(factoryHelper, rallyConfig, "", "", "");
         ScmConfiguration scmConfig = new ScmConfiguration("", "");
         BuildConfiguration buildConfig = new BuildConfiguration("SinceLastBuild");

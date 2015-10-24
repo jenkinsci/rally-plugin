@@ -50,9 +50,8 @@ public class RallyPlugin extends Publisher {
     @DataBoundConstructor
     public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedProxyUri, String shouldCaptureBuildStatus) throws RallyException, URISyntaxException {
         this.credentialsId = credentialsId;
-        String rallyCredentials = getRallyCredentials(credentialsId);
 
-        RallyConfiguration rally = new RallyConfiguration(rallyCredentials, rallyWorkspaceName, rallyScmName, shouldCreateIfAbsent);
+        RallyConfiguration rally = new RallyConfiguration(rallyWorkspaceName, rallyScmName, shouldCreateIfAbsent);
         ScmConfiguration scm = new ScmConfiguration(scmCommitTemplate, scmFileTemplate);
         BuildConfiguration build = new BuildConfiguration(buildCaptureRange);
         AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri, shouldCaptureBuildStatus);
@@ -71,6 +70,8 @@ public class RallyPlugin extends Publisher {
         AbstractModule module = new AbstractModule() {
             @Override
             protected void configure() {
+                config.getRally().setApiKey(getRallyCredentials(credentialsId));
+
                 bind(AdvancedConfiguration.class).toInstance(config.getAdvanced());
                 bind(BuildConfiguration.class).toInstance(config.getBuild());
                 bind(RallyConfiguration.class).toInstance(config.getRally());

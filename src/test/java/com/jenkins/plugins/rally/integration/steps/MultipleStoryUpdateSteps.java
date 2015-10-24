@@ -48,7 +48,7 @@ public class MultipleStoryUpdateSteps {
         when(this.stateContainer.getPreexistingRepositoryObjectQueryResponse().getTotalResultCount()).thenReturn(1);
         when(this.stateContainer.getPreexistingRepositoryObjectQueryResponse().getResults()).thenReturn(CommonSteps.createQueryResultsForRef());
 
-        RallyConfiguration rallyConfig = new RallyConfiguration("", "Workspace", "Scm", "false");
+        RallyConfiguration rallyConfig = new RallyConfiguration("Workspace", "Scm", "false");
         RallyConnector rallyConnector = new RallyConnector(factoryHelper, rallyConfig, "", "", "");
         ScmConfiguration scmConfig = new ScmConfiguration("http://${revision}", "http://${revision}/${file}");
         BuildConfiguration buildConfig = new BuildConfiguration("SinceLastBuild");
