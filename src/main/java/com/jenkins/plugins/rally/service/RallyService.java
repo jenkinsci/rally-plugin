@@ -51,9 +51,16 @@ public class RallyService implements AlmConnector {
 
         Map<String, List<String>> changesetRefsWithProjectRefs = new HashMap<String, List<String>>();
         for (RallyUpdateData.RallyId id : details.getIds()) {
-            String artifactRef = id.isStory()
-                    ? this.rallyConnector.queryForStory(id.getName())
-                    : this.rallyConnector.queryForDefect(id.getName());
+            String artifactRef;
+
+            try {
+                artifactRef = id.isStory()
+                        ? this.rallyConnector.queryForStory(id.getName())
+                        : this.rallyConnector.queryForDefect(id.getName());
+            } catch (RallyAssetNotFoundException exception) {
+                continue;
+            }
+
             String revisionUri = this.scmConnector.getRevisionUriFor(details.getRevision());
             String changesetRef = this.rallyConnector.createChangeset(repositoryRef, details.getRevision(), revisionUri, details.getTimeStamp(), details.getMsg(), artifactRef);
             String projectRef = rallyConnector.getObjectAndReturnInternalRef(artifactRef, "Project");
