@@ -1,5 +1,7 @@
 package com.jenkins.plugins.rally.utils;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.jenkins.plugins.rally.RallyAssetNotFoundException;
 import com.jenkins.plugins.rally.RallyException;
@@ -20,7 +22,13 @@ public class RallyQueryBuilder {
         }
 
         public Double getTaskAttributeAsDouble(String attribute) {
-            return this.jsonObject.get(attribute).getAsDouble();
+            JsonElement jsonAttribute = this.jsonObject.get(attribute);
+
+            if (jsonAttribute == null || jsonAttribute.isJsonNull()) {
+                return 0.0d;
+            }
+
+            return jsonAttribute.getAsDouble();
         }
 
         public String getRef() {
