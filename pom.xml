@@ -10,7 +10,7 @@
     <artifactId>rally-plugin</artifactId>
     <packaging>hpi</packaging>
     <name>Rally Plugin</name>
-    <version>2.3-SNAPSHOT</version>
+    <version>2.2.2</version>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Rally+plugin</url>
     <description>Updates Rally Task and ChangeSet data based on your commit messages</description>
 
@@ -31,7 +31,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/rally-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/rally-plugin.git</developerConnection>
         <url>http://github.com/jenkinsci/rally-plugin</url>
-        <tag>HEAD</tag>
+        <tag>rally-plugin-2.2.2</tag>
     </scm>
 
     <licenses>
