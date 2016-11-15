@@ -19,7 +19,7 @@ public class RallyCredentialsImpl extends BaseStandardCredentials implements Ral
 
     @DataBoundConstructor
     public RallyCredentialsImpl(@CheckForNull String id,
-                                @NonNull @CheckForNull String name,
+                                @NonNull String name,
                                 @CheckForNull String description,
                                 @CheckForNull String apiKey) {
         super(id, description);

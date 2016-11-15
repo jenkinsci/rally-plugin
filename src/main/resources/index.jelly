@@ -14,6 +14,7 @@
   ~ You should have received a copy of the GNU Lesser General Public
   ~ along with this program; if not, see <http://www.gnu.org/licenses/>.
   -->
+<?jelly escape-by-default='true'?>
 
 <div>
     Updates Rally Task and ChangeSet data based on your commit messages

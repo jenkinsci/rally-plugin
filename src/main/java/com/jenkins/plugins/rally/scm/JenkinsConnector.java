@@ -1,5 +1,7 @@
 package com.jenkins.plugins.rally.scm;
 
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+
 import com.google.inject.Inject;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.BuildConfiguration;
@@ -36,7 +38,7 @@ public class JenkinsConnector implements ScmConnector {
     public List<RallyUpdateData> getChanges(AbstractBuild build, PrintStream out) throws RallyException {
         Changes changes;
         // TODO: if a third is added it might be time to inheritance it up
-        switch(this.buildConfig.getCaptureRangeAsEnum()) {
+        switch (this.buildConfig.getCaptureRangeAsEnum()) {
             case SinceLastBuild:
                 changes = getChangesSinceLastBuild(build);
                 break;
@@ -47,7 +49,7 @@ public class JenkinsConnector implements ScmConnector {
                 throw new RallyException("Looking at invalid capture range");
         }
 
-        List<RallyUpdateData> detailsBeans = new ArrayList<RallyUpdateData>();
+        List<RallyUpdateData> detailsBeans = new ArrayList<>();
         for (ChangeInformation info : changes.getChangeInformation()) {
             for (Object item : info.getChangeLogSet().getItems()) {
                 ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
@@ -63,6 +65,9 @@ public class JenkinsConnector implements ScmConnector {
         return new Changes(build, run != null ? run.getNumber() + 1 : build.getNumber());
     }
 
+    @SuppressWarnings(
+            value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+            justification = "I believe findbugs to be in error on this one")
     private Changes getChangesSinceLastSuccessfulBuild(AbstractBuild build) {
         Run run = build.getPreviousBuild();
         while (run != null && (run.getResult() == null || run.getResult().isWorseThan(Result.SUCCESS)))
@@ -71,6 +76,9 @@ public class JenkinsConnector implements ScmConnector {
         return new Changes(build, run != null ? run.getNumber() + 1 : build.getNumber());
     }
 
+    @SuppressWarnings(
+            value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
+            justification = "I believe findbugs to be in error on this one")
     private RallyUpdateData createRallyDetailsDTO(
             ChangeInformation changeInformation,
             ChangeLogSet.Entry changeLogEntry,
@@ -102,9 +110,10 @@ public class JenkinsConnector implements ScmConnector {
 
         return details;
     }
+
     private String getMessage(ChangeLogSet.Entry cse, String origBuildNumber, String currentBuildNumber) {
         String msg;
-        if(origBuildNumber.equals(currentBuildNumber))
+        if (origBuildNumber.equals(currentBuildNumber))
             msg = cse.getAuthor() + " # " + cse.getMsg() + " (Build #" + origBuildNumber + ")";
         else
             msg = cse.getAuthor() + " # " + cse.getMsg() + " (Builds #" + currentBuildNumber + " - " + origBuildNumber + ")";
@@ -112,8 +121,8 @@ public class JenkinsConnector implements ScmConnector {
     }
 
     private List<RallyUpdateData.FilenameAndAction> getFileNameAndTypes(ChangeLogSet.Entry cse) {
-        List<RallyUpdateData.FilenameAndAction> list = new ArrayList<RallyUpdateData.FilenameAndAction>();
-        for(ChangeLogSet.AffectedFile files : cse.getAffectedFiles()) {
+        List<RallyUpdateData.FilenameAndAction> list = new ArrayList<>();
+        for (ChangeLogSet.AffectedFile files : cse.getAffectedFiles()) {
             RallyUpdateData.FilenameAndAction filenameAndAction = new RallyUpdateData.FilenameAndAction();
             filenameAndAction.filename = files.getPath();
             filenameAndAction.action = files.getEditType();
