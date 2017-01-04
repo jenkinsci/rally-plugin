@@ -9,9 +9,8 @@ import com.jenkins.plugins.rally.config.ScmConfiguration;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.utils.CommitMessageParser;
 import com.jenkins.plugins.rally.utils.TemplatedUriResolver;
-import hudson.model.AbstractBuild;
-import hudson.model.Result;
 import hudson.model.Run;
+import hudson.model.Result;
 import hudson.scm.ChangeLogSet;
 import org.joda.time.DateTime;
 
@@ -35,7 +34,7 @@ public class JenkinsConnector implements ScmConnector {
         this.buildConfig = buildConfig;
     }
 
-    public List<RallyUpdateData> getChanges(AbstractBuild build, PrintStream out) throws RallyException {
+    public List<RallyUpdateData> getChanges(Run build, PrintStream out) throws RallyException {
         Changes changes;
         // TODO: if a third is added it might be time to inheritance it up
         switch (this.buildConfig.getCaptureRangeAsEnum()) {
@@ -60,7 +59,7 @@ public class JenkinsConnector implements ScmConnector {
         return detailsBeans;
     }
 
-    private Changes getChangesSinceLastBuild(AbstractBuild build) {
+    private Changes getChangesSinceLastBuild(Run build) {
         Run run = build.getPreviousBuild();
         return new Changes(build, run != null ? run.getNumber() + 1 : build.getNumber());
     }
@@ -68,7 +67,7 @@ public class JenkinsConnector implements ScmConnector {
     @SuppressWarnings(
             value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
             justification = "I believe findbugs to be in error on this one")
-    private Changes getChangesSinceLastSuccessfulBuild(AbstractBuild build) {
+    private Changes getChangesSinceLastSuccessfulBuild(Run build) {
         Run run = build.getPreviousBuild();
         while (run != null && (run.getResult() == null || run.getResult().isWorseThan(Result.SUCCESS)))
             run = run.getPreviousBuild();
@@ -82,7 +81,7 @@ public class JenkinsConnector implements ScmConnector {
     private RallyUpdateData createRallyDetailsDTO(
             ChangeInformation changeInformation,
             ChangeLogSet.Entry changeLogEntry,
-            AbstractBuild build,
+            Run build,
             PrintStream out) {
         String message = changeLogEntry.getMsg();
         RallyUpdateData details = CommitMessageParser.parse(message);
@@ -92,7 +91,7 @@ public class JenkinsConnector implements ScmConnector {
         details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry));
         details.setOut(out);
         details.setBuildDuration((DateTime.now().getMillis() - build.getStartTimeInMillis()) / 1000D);
-        details.setBuildName(build.getProject().getName());
+        details.setBuildName(build.getParent().getName());
         try {
             details.setBuildUrl(build.getAbsoluteUrl());
         } catch (Exception exception) {
