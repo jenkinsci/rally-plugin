@@ -42,7 +42,7 @@
     </licenses>
 
     <properties>
-        <jenkins.version>1.565.3</jenkins.version>
+        <jenkins.version>1.580.1</jenkins.version>
         <hpi-plugin.version>1.120</hpi-plugin.version>
         <stapler-plugin.version>1.17</stapler-plugin.version>
     </properties>
@@ -209,6 +209,11 @@
             <artifactId>json-path</artifactId>
             <version>0.8.1</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci</groupId>
+            <artifactId>symbol-annotation</artifactId>
+            <version>1.2</version>
         </dependency>
     </dependencies>
 

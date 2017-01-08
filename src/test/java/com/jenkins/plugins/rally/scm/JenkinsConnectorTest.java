@@ -4,13 +4,13 @@ import com.jenkins.plugins.rally.config.BuildConfiguration;
 import com.jenkins.plugins.rally.config.ScmConfiguration;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.Project;
 import hudson.model.Result;
 import hudson.scm.ChangeLogSet;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -57,7 +57,7 @@ public class JenkinsConnectorTest {
         when(build.getNumber()).thenReturn(5);
         when(build.getTimestampString2()).thenReturn(timestamp);
         when(build.getChangeSet()).thenReturn(changeLogSet);
-        when(build.getProject()).thenReturn(mock(Project.class));
+        when(build.getParent()).thenReturn(mock(Project.class));
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
         ScmConfiguration scmConfiguration = new ScmConfiguration(null, null);
@@ -89,7 +89,7 @@ public class JenkinsConnectorTest {
         when(lastSuccessfulBuild.getNumber()).thenReturn(5);
         when(lastSuccessfulBuild.getTimestampString2()).thenReturn(timestamp);
         when(lastSuccessfulBuild.getChangeSet()).thenReturn(secondChangeLogSet);
-        when(lastSuccessfulBuild.getProject()).thenReturn(mock(Project.class));
+        when(lastSuccessfulBuild.getParent()).thenReturn(mock(Project.class));
         when(lastSuccessfulBuild.getResult()).thenReturn(Result.FAILURE);
 
         AbstractBuild build = mock(AbstractBuild.class);
@@ -97,7 +97,7 @@ public class JenkinsConnectorTest {
         when(build.getNumber()).thenReturn(5);
         when(build.getTimestampString2()).thenReturn(timestamp);
         when(build.getChangeSet()).thenReturn(firstChangeLogSet);
-        when(build.getProject()).thenReturn(mock(Project.class));
+        when(build.getParent()).thenReturn(mock(Project.class));
         when(build.getResult()).thenReturn(Result.SUCCESS);
 
         ScmConfiguration scmConfiguration = new ScmConfiguration(null, null);

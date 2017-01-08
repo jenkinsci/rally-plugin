@@ -1,6 +1,6 @@
 package com.jenkins.plugins.rally.scm;
 
-import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 
 public class ChangeInformation {
@@ -8,7 +8,7 @@ public class ChangeInformation {
     private String buildTimeStamp;
     private String buildNumber;
     private ChangeLogSet changeLogSet;
-    private AbstractBuild build;
+    private Run build;
 
     public String getBuildTimeStamp() {
         return buildTimeStamp;
@@ -34,11 +34,11 @@ public class ChangeInformation {
         this.changeLogSet = changeLogSet;
     }
 
-    public AbstractBuild getBuild() {
+    public Run getBuild() {
         return build;
     }
 
-    public void setBuild(AbstractBuild build) {
+    public void setBuild(Run build) {
         this.build = build;
     }
 }

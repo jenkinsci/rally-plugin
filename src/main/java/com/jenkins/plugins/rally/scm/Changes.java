@@ -1,11 +1,12 @@
 package com.jenkins.plugins.rally.scm;
 
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.Api;
 import hudson.scm.ChangeLogSet;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
-
+import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,19 +15,33 @@ public class Changes {
 
     private List<ChangeInformation> changeInformation = new LinkedList<ChangeInformation>();
 
-    private final AbstractBuild build;
+    private final Run build;
 
-    public Changes(AbstractBuild build, int buildNumber) {
+    public Changes(Run<?, ?> build, int buildNumber) {
         this.build = build;
-        AbstractBuild b = build;
+        Run<?, ?> b = build;
+        
         // TODO: is this logic necessary? if so, write a test.
         while (b != null && b.getNumber() >= buildNumber) {
-            populateChangeInformation(b, b.getChangeSet());
+            if(build instanceof AbstractBuild<?,?>) {
+                AbstractBuild<?,?> ab = (AbstractBuild<?,?>)build;
+                populateChangeInformation(b, ab.getChangeSet());
+            } else {
+                try {
+                    // checking for WorkflowRun's getChangeSets method
+                    List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = (List<ChangeLogSet<? extends ChangeLogSet.Entry>>)b.getClass().getMethod("getChangeSets").invoke(b);
+                    if(!changeSets.isEmpty()) {
+                        populateChangeInformation(b, changeSets.get(0));
+                    }
+                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                    //
+                }
+            }
             b = b.getPreviousBuild();
         }
     }
 
-    private void populateChangeInformation(AbstractBuild build, ChangeLogSet changeLogSet) {
+    private void populateChangeInformation(Run build, ChangeLogSet changeLogSet) {
         ChangeInformation ci = new ChangeInformation();
         ci.setBuildNumber(String.valueOf(build.getNumber()));
         ci.setBuildTimeStamp(build.getTimestampString2());
@@ -42,7 +57,7 @@ public class Changes {
         return new Api(this);
     }
 
-    public AbstractBuild getBuild() {
+    public Run getBuild() {
         return build;
     }
 

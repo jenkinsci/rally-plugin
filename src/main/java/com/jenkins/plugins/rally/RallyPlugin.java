@@ -17,9 +17,12 @@ import com.jenkins.plugins.rally.scm.ScmConnector;
 import com.jenkins.plugins.rally.service.RallyService;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
+import hudson.FilePath;
+import hudson.model.TaskListener;
+import hudson.model.Run;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -35,13 +38,17 @@ import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import javax.annotation.Nonnull;
+import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.Symbol;
+
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * @author Tushar Shinde
  * @author R. Michael Rogers
  */
-public class RallyPlugin extends Publisher {
+public class RallyPlugin extends Publisher implements SimpleBuildStep {
     private final RallyPluginConfiguration config;
     private RallyService rallyService;
     private ScmConnector jenkinsConnector;
@@ -62,7 +69,6 @@ public class RallyPlugin extends Publisher {
     private String getRallyCredentials(String credentialsId) {
         List<RallyCredentials> rallyCredentialsList = CredentialsProvider.lookupCredentials(RallyCredentials.class, Jenkins.getInstance(), ACL.SYSTEM);
         RallyCredentials rallyCredentials = CredentialsMatchers.firstOrNull(rallyCredentialsList, CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
-
         return rallyCredentials == null ? null : rallyCredentials.getApiKey().getPlainText();
     }
 
@@ -71,7 +77,6 @@ public class RallyPlugin extends Publisher {
             @Override
             protected void configure() {
                 config.getRally().setApiKey(getRallyCredentials(credentialsId));
-
                 bind(AdvancedConfiguration.class).toInstance(config.getAdvanced());
                 bind(BuildConfiguration.class).toInstance(config.getBuild());
                 bind(RallyConfiguration.class).toInstance(config.getRally());
@@ -84,13 +89,13 @@ public class RallyPlugin extends Publisher {
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
         try {
             initialize();
         } catch (RallyException exception) {
             System.out.println(exception.getMessage());
             exception.printStackTrace(System.out);
-            return false;
+            return;
         }
 
         boolean shouldBuildSucceed = true;
@@ -98,10 +103,10 @@ public class RallyPlugin extends Publisher {
 
         List<RallyUpdateData> detailsList;
         try {
-            detailsList = this.jenkinsConnector.getChanges(build, out);
+            detailsList = this.jenkinsConnector.getChanges(run, out);
         } catch (RallyException exception) {
             out.println("Unable to retrieve SCM changes from Jenkins: " + exception.getMessage());
-            return false;
+            return;
         }
 
         for (RallyUpdateData details : detailsList) {
@@ -131,8 +136,9 @@ public class RallyPlugin extends Publisher {
         } catch (RallyException exception) {
             // Ignore
         }
-
-        return shouldBuildSucceed;
+        if (!shouldBuildSucceed) {
+            run.setResult(Result.FAILURE);
+        }
     }
 
     @Inject
