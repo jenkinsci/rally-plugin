@@ -6,11 +6,9 @@ import hudson.model.Api;
 import hudson.scm.ChangeLogSet;
 import org.kohsuke.stapler.export.Exported;
 import org.kohsuke.stapler.export.ExportedBean;
-import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.ArrayList;
 
 @ExportedBean
 public class Changes {
@@ -19,21 +17,25 @@ public class Changes {
 
     private final Run build;
 
-    public Changes(Run build, int buildNumber) {
+    public Changes(Run<?, ?> build, int buildNumber) {
         this.build = build;
-        Run b = build;
+        Run<?, ?> b = build;
         
         // TODO: is this logic necessary? if so, write a test.
         while (b != null && b.getNumber() >= buildNumber) {
-            try {
-                List<ChangeLogSet<?>> changeSets = new ArrayList<>();
-                Method m = b.getClass().getMethod("getChangeSets");
-                changeSets = (List<ChangeLogSet<? extends ChangeLogSet.Entry>>)m.invoke(b);
-                if(!changeSets.isEmpty()) {
-                    populateChangeInformation(b, changeSets.get(0));
+            if(build instanceof AbstractBuild<?,?>) {
+                AbstractBuild<?,?> ab = (AbstractBuild<?,?>)build;
+                populateChangeInformation(b, ab.getChangeSet());
+            } else {
+                try {
+                    // checking for WorkflowRun's getChangeSets method
+                    List<ChangeLogSet<? extends ChangeLogSet.Entry>> changeSets = (List<ChangeLogSet<? extends ChangeLogSet.Entry>>)b.getClass().getMethod("getChangeSets").invoke(b);
+                    if(!changeSets.isEmpty()) {
+                        populateChangeInformation(b, changeSets.get(0));
+                    }
+                } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+                    //
                 }
-            } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                populateChangeInformation(b, null);
             }
             b = b.getPreviousBuild();
         }

@@ -39,7 +39,7 @@ class MyChangeLogSet extends ChangeLogSet {
         return detailsList.iterator();
     }
 }
-/*
+
 @RunWith(MockitoJUnitRunner.class)
 public class JenkinsConnectorTest {
     @Test
@@ -109,4 +109,3 @@ public class JenkinsConnectorTest {
         assertThat(detailsList, hasSize(2));
     }
 }
-*/

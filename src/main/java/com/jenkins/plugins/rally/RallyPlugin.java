@@ -22,6 +22,7 @@ import hudson.model.TaskListener;
 import hudson.model.Run;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
+import hudson.model.Result;
 import hudson.model.Item;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
@@ -68,7 +69,6 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep {
     private String getRallyCredentials(String credentialsId) {
         List<RallyCredentials> rallyCredentialsList = CredentialsProvider.lookupCredentials(RallyCredentials.class, Jenkins.getInstance(), ACL.SYSTEM);
         RallyCredentials rallyCredentials = CredentialsMatchers.firstOrNull(rallyCredentialsList, CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
-
         return rallyCredentials == null ? null : rallyCredentials.getApiKey().getPlainText();
     }
 
@@ -77,7 +77,6 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep {
             @Override
             protected void configure() {
                 config.getRally().setApiKey(getRallyCredentials(credentialsId));
-
                 bind(AdvancedConfiguration.class).toInstance(config.getAdvanced());
                 bind(BuildConfiguration.class).toInstance(config.getBuild());
                 bind(RallyConfiguration.class).toInstance(config.getRally());
@@ -136,6 +135,9 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep {
             this.rallyService.closeConnection();
         } catch (RallyException exception) {
             // Ignore
+        }
+        if (!shouldBuildSucceed) {
+            run.setResult(Result.FAILURE);
         }
     }
 
