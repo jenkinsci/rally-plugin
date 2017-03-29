@@ -27,7 +27,9 @@ public class RallyUpdateBean {
 
     public JsonObject getJsonObject() {
         JsonObject object = new JsonObject();
-        object.addProperty("State", state);
+        if (state != null) {
+        	object.addProperty("State", state);
+        }
 
         if (todo != null) {
             object.addProperty("ToDo", todo);
