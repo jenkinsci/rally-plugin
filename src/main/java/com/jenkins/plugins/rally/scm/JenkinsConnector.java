@@ -1,6 +1,14 @@
 package com.jenkins.plugins.rally.scm;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.joda.time.DateTime;
 
 import com.google.inject.Inject;
 import com.jenkins.plugins.rally.RallyException;
@@ -9,24 +17,18 @@ import com.jenkins.plugins.rally.config.ScmConfiguration;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.utils.CommitMessageParser;
 import com.jenkins.plugins.rally.utils.TemplatedUriResolver;
+
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hudson.model.AbstractBuild;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
-import org.joda.time.DateTime;
-
-import java.io.PrintStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 public class JenkinsConnector implements ScmConnector {
     private final TemplatedUriResolver uriResolver;
     private ScmConfiguration config;
     private BuildConfiguration buildConfig;
-
+    
     @Inject
     public JenkinsConnector(ScmConfiguration scmConfig, BuildConfiguration buildConfig) {
         this.uriResolver = new TemplatedUriResolver();
@@ -89,7 +91,7 @@ public class JenkinsConnector implements ScmConnector {
         details.setOrigBuildNumber(changeInformation.getBuildNumber());
         details.setCurrentBuildNumber(String.valueOf(build.number));
         details.setMsg(getMessage(changeLogEntry, details.getOrigBuildNumber(), details.getCurrentBuildNumber()));
-        details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry));
+        details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry, out));
         details.setOut(out);
         details.setBuildDuration((DateTime.now().getMillis() - build.getStartTimeInMillis()) / 1000D);
         details.setBuildName(build.getProject().getName());
@@ -120,11 +122,24 @@ public class JenkinsConnector implements ScmConnector {
         return msg;
     }
 
-    private List<RallyUpdateData.FilenameAndAction> getFileNameAndTypes(ChangeLogSet.Entry cse) {
+    private List<RallyUpdateData.FilenameAndAction> getFileNameAndTypes(ChangeLogSet.Entry cse, PrintStream out) {
         List<RallyUpdateData.FilenameAndAction> list = new ArrayList<>();
         for (ChangeLogSet.AffectedFile files : cse.getAffectedFiles()) {
             RallyUpdateData.FilenameAndAction filenameAndAction = new RallyUpdateData.FilenameAndAction();
-            filenameAndAction.filename = files.getPath();
+
+            Class<?> fileClass = files.getClass();
+            if ("hudson.scm.CVSChangeLogSet.File".equals(fileClass.getCanonicalName())) {
+            	String fileRevision = "";
+				try {
+					fileRevision = (String)fileClass.getDeclaredMethod("getRevision", new Class[] {}).invoke(files, null);
+				} catch (Exception e) {
+					out.println("ERROR " + e.getMessage());
+					e.printStackTrace();
+				}
+            	filenameAndAction.filename = files.getPath() + " " + fileRevision;
+            } else {
+            	filenameAndAction.filename = files.getPath();
+            }
             filenameAndAction.action = files.getEditType();
 
             list.add(filenameAndAction);
