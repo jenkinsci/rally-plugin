@@ -111,30 +111,38 @@ public class RallyService implements AlmConnector {
         }
 
         for (RallyUpdateData.RallyId id : details.getIds()) {
+        	boolean anyChange = false;
+        	
             String storyRef = this.rallyConnector.queryForStory(id.getName());
             RallyQueryBuilder.RallyQueryResponseObject taskObject = getTaskObjectByStoryRef(details, storyRef);
 
             RallyUpdateBean updateInfo = new RallyUpdateBean();
 
-            updateInfo.setState(details.getTaskStatus().isEmpty()
-                    ? "In-Progress"
-                    : details.getTaskStatus());
+            if (!details.getTaskStatus().isEmpty()) {
+            	updateInfo.setState(details.getTaskStatus());
+            	anyChange = true;
+            }
 
             if (!details.getTaskToDO().isEmpty()) {
                 updateInfo.setTodo(details.getTaskToDO());
+                anyChange = true;
             }
 
             if (!details.getTaskActuals().isEmpty()) {
                 Double actuals = Double.parseDouble(details.getTaskActuals());
                 actuals = actuals + taskObject.getTaskAttributeAsDouble("Actuals");
                 updateInfo.setActual(Double.toString(actuals));
+                anyChange = true;
             }
 
             if (!details.getTaskEstimates().isEmpty()) {
                 updateInfo.setEstimate(details.getTaskEstimates());
+                anyChange = true;
             }
 
-            this.rallyConnector.updateTask(taskObject.getRef(), updateInfo);
+            if (anyChange) {
+            	this.rallyConnector.updateTask(taskObject.getRef(), updateInfo);
+            }
         }
     }
 
