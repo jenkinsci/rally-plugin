@@ -133,8 +133,7 @@ public class JenkinsConnector implements ScmConnector {
 				try {
 					fileRevision = (String)fileClass.getDeclaredMethod("getRevision", new Class[] {}).invoke(files, null);
 				} catch (Exception e) {
-					out.println("ERROR " + e.getMessage());
-					e.printStackTrace();
+					e.printStackTrace(out);
 				}
             	filenameAndAction.filename = files.getPath() + " " + fileRevision;
             } else {
