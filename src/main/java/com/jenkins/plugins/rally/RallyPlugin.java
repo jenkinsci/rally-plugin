@@ -2,7 +2,6 @@ package com.jenkins.plugins.rally;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.inject.AbstractModule;
@@ -13,6 +12,7 @@ import com.google.inject.util.Modules;
 import com.jenkins.plugins.rally.config.*;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.credentials.RallyCredentials;
+import com.jenkins.plugins.rally.credentials.RallyCredentialsImpl;
 import com.jenkins.plugins.rally.scm.ScmConnector;
 import com.jenkins.plugins.rally.service.RallyService;
 import hudson.Extension;
@@ -33,9 +33,8 @@ import org.kohsuke.stapler.QueryParameter;
 
 import java.io.PrintStream;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * @author Tushar Shinde
@@ -59,18 +58,18 @@ public class RallyPlugin extends Publisher {
         this.config = new RallyPluginConfiguration(rally, scm, build, advanced);
     }
 
-    private String getRallyCredentials(String credentialsId) {
-        List<RallyCredentials> rallyCredentialsList = CredentialsProvider.lookupCredentials(RallyCredentials.class, Jenkins.getInstance(), ACL.SYSTEM);
-        RallyCredentials rallyCredentials = CredentialsMatchers.firstOrNull(rallyCredentialsList, CredentialsMatchers.allOf(CredentialsMatchers.withId(credentialsId)));
-
+    private String getRallyCredentials(String credentialsId, AbstractBuild context) {
+        RallyCredentials rallyCredentials = CredentialsProvider.findCredentialById(credentialsId,
+                RallyCredentialsImpl.class, context, Collections.<DomainRequirement>emptyList());
+        CredentialsProvider.track(context, rallyCredentials);
         return rallyCredentials == null ? null : rallyCredentials.getApiKey().getPlainText();
     }
 
-    private void initialize() throws RallyException {
+    private void initialize(final AbstractBuild build) throws RallyException {
         AbstractModule module = new AbstractModule() {
             @Override
             protected void configure() {
-                config.getRally().setApiKey(getRallyCredentials(credentialsId));
+                config.getRally().setApiKey(getRallyCredentials(credentialsId, build));
 
                 bind(AdvancedConfiguration.class).toInstance(config.getAdvanced());
                 bind(BuildConfiguration.class).toInstance(config.getBuild());
@@ -86,7 +85,7 @@ public class RallyPlugin extends Publisher {
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         try {
-            initialize();
+            initialize(build);
         } catch (RallyException exception) {
             System.out.println(exception.getMessage());
             exception.printStackTrace(System.out);
@@ -209,25 +208,23 @@ public class RallyPlugin extends Publisher {
             return "Update Rally Task and ChangeSet";
         }
 
-
         @SuppressWarnings("unused") // used by stapler
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context,
-                                                     @QueryParameter String remoteBase) {
-            if (context == null || !context.hasPermission(Item.CONFIGURE)) {
-                return new StandardListBoxModel();
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item context,
+                                                     @QueryParameter String credential) {
+
+            if(context == null && !Jenkins.getActiveInstance().hasPermission(Jenkins.ADMINISTER) ||
+                    context != null && !context.hasPermission(Item.EXTENDED_READ)) {
+                return new StandardListBoxModel().includeCurrentValue(credential);
             }
 
-            List<DomainRequirement> domainRequirements = newArrayList();
             return new StandardListBoxModel()
-                    .withEmptySelection()
-                    .withMatching(
-                            CredentialsMatchers.anyOf(
-                                    CredentialsMatchers.instanceOf(RallyCredentials.class)),
-                            CredentialsProvider.lookupCredentials(
-                                    StandardCredentials.class,
-                                    context,
-                                    ACL.SYSTEM,
-                                    domainRequirements));
+                    .includeEmptyValue()
+                    .includeMatchingAs(
+                            ACL.SYSTEM,
+                            context,
+                            RallyCredentialsImpl.class,
+                            Collections.<DomainRequirement>emptyList(),
+                            CredentialsMatchers.instanceOf(RallyCredentialsImpl.class));
         }
     }
 }
