@@ -1,6 +1,6 @@
 package com.jenkins.plugins.rally.credentials;
 
-import com.cloudbees.plugins.credentials.CredentialsDescriptor;
+import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.NameWith;
 import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
@@ -18,11 +18,12 @@ public class RallyCredentialsImpl extends BaseStandardCredentials implements Ral
     private final String name;
 
     @DataBoundConstructor
-    public RallyCredentialsImpl(@CheckForNull String id,
+    public RallyCredentialsImpl(@CheckForNull CredentialsScope scope,
+                                @CheckForNull String id,
                                 @NonNull String name,
                                 @CheckForNull String description,
                                 @CheckForNull String apiKey) {
-        super(id, description);
+        super(scope, id, description);
         this.apiKey = Secret.fromString(apiKey);
         this.name = name;
     }
@@ -37,9 +38,7 @@ public class RallyCredentialsImpl extends BaseStandardCredentials implements Ral
         return this.name;
     }
 
-    @Extension
-    public static class Descriptor
-            extends CredentialsDescriptor {
+    @Extension public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
 
         /** {@inheritDoc} */
         @Override
