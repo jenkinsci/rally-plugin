@@ -1,6 +1,7 @@
 package com.jenkins.plugins.rally.service;
 
 import com.google.gson.JsonObject;
+import com.jenkins.plugins.rally.RallyArtifact;
 import com.jenkins.plugins.rally.RallyAssetNotFoundException;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.AdvancedConfiguration;
@@ -37,6 +38,8 @@ public class RallyServiceTest {
 
     private RallyService service;
 
+    private RallyArtifact rallyArtifact = new RallyArtifact("_ref", "US12345", "Test artifact");
+
     @Before
     public void setUp() throws Exception {
         this.service = new RallyService(this.connector, scmConnector, new AdvancedConfiguration("http://proxy.url", "true"), this.rallyConfiguration);
@@ -57,6 +60,7 @@ public class RallyServiceTest {
     public void shouldBeConfigurableToCreateNonExistentRepository() throws RallyException {
         when(this.connector.queryForRepository()).thenThrow(new RallyAssetNotFoundException());
         when(this.rallyConfiguration.shouldCreateIfAbsent()).thenReturn(true);
+        when(this.connector.queryForStory("US12345")).thenReturn(rallyArtifact);
 
         RallyUpdateData details = new RallyUpdateData();
         details.addId("US12345");
@@ -96,7 +100,7 @@ public class RallyServiceTest {
 
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
         when(this.connector.queryForTaskById(anyString(), anyString())).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
         this.service.updateRallyTaskDetails(details);
@@ -116,7 +120,7 @@ public class RallyServiceTest {
 
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
         when(this.connector.queryForTaskById(anyString(), anyString())).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
         this.service.updateRallyTaskDetails(details);
@@ -136,7 +140,7 @@ public class RallyServiceTest {
 
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
         when(this.connector.queryForTaskById(anyString(), anyString())).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
         this.service.updateRallyTaskDetails(details);
@@ -157,7 +161,7 @@ public class RallyServiceTest {
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
         taskJsonObject.addProperty("Actuals", "3");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
 
         when(this.connector.queryForTaskById(anyString(), anyString())).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
@@ -178,7 +182,7 @@ public class RallyServiceTest {
 
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
         when(this.connector.queryForTaskById(anyString(), anyString())).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
         this.service.updateRallyTaskDetails(details);
@@ -196,7 +200,7 @@ public class RallyServiceTest {
 
         JsonObject taskJsonObject = new JsonObject();
         taskJsonObject.addProperty("_ref", "_ref");
-        when(this.connector.queryForStory(anyString())).thenReturn("_ref");
+        when(this.connector.queryForStory(anyString())).thenReturn(rallyArtifact);
         when(this.connector.queryForTaskByIndex(anyString(), eq(1))).thenReturn(new RallyQueryBuilder.RallyQueryResponseObject(taskJsonObject));
 
         this.service.updateRallyTaskDetails(details);
@@ -215,6 +219,8 @@ public class RallyServiceTest {
                 .thenReturn("_projectRef");
         when(this.connector.queryForBuildDefinition(any(String.class), eq("_projectRef")))
                 .thenThrow(new RallyAssetNotFoundException());
+        when(this.connector.queryForStory("US12345"))
+                .thenReturn(rallyArtifact);
 
         this.service.updateChangeset(details);
 
@@ -238,6 +244,8 @@ public class RallyServiceTest {
                 .thenReturn("_projectRef");
         when(this.connector.queryForBuildDefinition(any(String.class), eq("_projectRef")))
                 .thenReturn("_buildDefinitionRef");
+        when(this.connector.queryForStory("US12345"))
+                .thenReturn(rallyArtifact);
 
         this.service.updateChangeset(details);
 

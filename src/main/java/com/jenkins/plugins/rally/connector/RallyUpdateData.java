@@ -1,5 +1,6 @@
 package com.jenkins.plugins.rally.connector;
 
+import com.jenkins.plugins.rally.utils.RallyGeneralUtils;
 import hudson.scm.EditType;
 
 import java.io.PrintStream;
@@ -26,7 +27,7 @@ public class RallyUpdateData {
         }
 
         public boolean isStory() {
-            return this.name.toLowerCase().startsWith("us");
+            return RallyGeneralUtils.isStory(this.name);
         }
     }
 
@@ -47,6 +48,8 @@ public class RallyUpdateData {
     private String taskActuals = "";
     private String buildUrl = "";
     private String buildName = "Default Build Name";
+    private String authorFullName;
+    private String authorEmailAddress;
 
     public String getBuildName() {
         return buildName;
@@ -185,4 +188,8 @@ public class RallyUpdateData {
     public void setTaskActuals(String taskActuals) {
         this.taskActuals = taskActuals;
     }
+    public String getAuthorFullName() { return authorFullName; }
+    public void setAuthorFullName(String authorFullName) { this.authorFullName = authorFullName; }
+    public String getAuthorEmailAddress() { return authorEmailAddress; }
+    public void setAuthorEmailAddress(String authorEmailAddress) { this.authorEmailAddress = authorEmailAddress; }
 }

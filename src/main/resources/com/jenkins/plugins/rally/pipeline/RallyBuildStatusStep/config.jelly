@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+    <f:entry title="Rally Repository Name" field="rallyScmName">
+        <f:textbox clazz="required" checkMessage="rallyScmName is required"/>
+    </f:entry>
+    <f:advanced>
+        <f:entry title="Rally API Key" field="credentialsId">
+            <c:select/>
+        </f:entry>
+
+        <f:entry title="Rally Workspace Name" field="rallyWorkspaceName">
+            <f:textbox/>
+        </f:entry>
+
+
+        <f:entry title="Create Repository if it doesn't already exist?" field="shouldCreateIfAbsent">
+            <f:checkbox default="true"/>
+        </f:entry>
+
+        <f:entry title="Commit URI" field="scmCommitTemplate" help="/plugin/rally-plugin/help-scmCommitTemplate.html">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="File URI" field="scmFileTemplate" help="/plugin/rally-plugin/help-scmFileTemplate.html">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Update changes..." field="buildCaptureChange">
+            <select name="buildCaptureRange">
+                <j:choose>
+                    <j:when test="${instance.getBuildCaptureRange() == null}">
+                        <option value="" selected="selected">Use global settings</option>
+                    </j:when>
+                    <j:otherwise>
+                        <option value="">Use global settings</option>
+                    </j:otherwise>
+                </j:choose>
+                <j:choose>
+                    <j:when test="${instance.getBuildCaptureRange() == 'SinceLastBuild'}">
+                        <option value="SinceLastBuild" selected="selected">Since last build</option>
+                    </j:when>
+                    <j:otherwise>
+                        <option value="SinceLastBuild">Since last build</option>
+                    </j:otherwise>
+                </j:choose>
+                <j:choose>
+                    <j:when test="${instance.getBuildCaptureRange() == 'SinceLastSuccessfulBuild'}">
+                        <option value="SinceLastSuccessfulBuild" selected="selected">Since last successful build</option>
+                    </j:when>
+                    <j:otherwise>
+                        <option value="SinceLastSuccessfulBuild">Since last successful build</option>
+                    </j:otherwise>
+                </j:choose>
+            </select>
+        </f:entry>
+
+        <f:entry title="Proxy URI" field="advancedProxyUri">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Capture Build Status in Rally?" field="shouldCaptureBuildStatus">
+            <f:checkbox default="true"/>
+        </f:entry>
+    </f:advanced>
+</j:jelly>

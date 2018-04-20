@@ -2,6 +2,7 @@ package com.jenkins.plugins.rally.service;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.jenkins.plugins.rally.RallyArtifact;
 import com.jenkins.plugins.rally.RallyAssetNotFoundException;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.AdvancedConfiguration;
@@ -12,6 +13,7 @@ import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.scm.ScmConnector;
 import com.jenkins.plugins.rally.utils.RallyQueryBuilder;
 import com.jenkins.plugins.rally.utils.RallyUpdateBean;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,11 +34,11 @@ public class RallyService implements AlmConnector {
         this.rallyConfiguration = rallyConfiguration;
     }
 
-    public void closeConnection() throws RallyException {
+    public void closeConnection() throws RallyException{
         this.rallyConnector.close();
     }
 
-    public void updateChangeset(RallyUpdateData details) throws RallyException {
+    public List<RallyArtifact> updateChangeset(RallyUpdateData details) throws RallyException {
         String repositoryRef;
 
         try {
@@ -49,24 +51,36 @@ public class RallyService implements AlmConnector {
             }
         }
 
-        Map<String, List<String>> changesetRefsWithProjectRefs = new HashMap<String, List<String>>();
+        String authorRef = null;
+        if(!StringUtils.isEmpty(details.getAuthorEmailAddress()) && !StringUtils.isEmpty(details.getAuthorFullName())) {
+            try {
+                authorRef = this.rallyConnector.queryForUserByNameOrMail(details.getAuthorFullName(), details.getAuthorEmailAddress());
+            } catch (RallyException e){
+                // ignore
+            }
+        }
+        List<RallyArtifact> involvedArtifacts = Lists.newArrayList();
+        Map<String, List<String>> changesetRefsWithProjectRefs = new HashMap<>();
         for (RallyUpdateData.RallyId id : details.getIds()) {
+            RallyArtifact artifact;
             String artifactRef;
 
             try {
-                artifactRef = id.isStory()
+                artifact = id.isStory()
                         ? this.rallyConnector.queryForStory(id.getName())
                         : this.rallyConnector.queryForDefect(id.getName());
+                artifactRef = artifact.getRef();
+                involvedArtifacts.add(artifact);
             } catch (RallyAssetNotFoundException exception) {
                 continue;
             }
 
-            String revisionUri = this.scmConnector.getRevisionUriFor(details.getRevision());
-            String changesetRef = this.rallyConnector.createChangeset(repositoryRef, details.getRevision(), revisionUri, details.getTimeStamp(), details.getMsg(), artifactRef);
+            String revisionUri = this.scmConnector.getRevisionUriFor(rallyConfiguration.getScmName(), details.getRevision());
+            String changesetRef = this.rallyConnector.createChangeset(repositoryRef, details.getRevision(), revisionUri, details.getTimeStamp(), details.getMsg(), artifactRef, authorRef);
             String projectRef = rallyConnector.getObjectAndReturnInternalRef(artifactRef, "Project");
 
             if (!changesetRefsWithProjectRefs.containsKey(projectRef)) {
-                changesetRefsWithProjectRefs.put(projectRef, Lists.<String>newArrayList());
+                changesetRefsWithProjectRefs.put(projectRef, Lists.newArrayList());
             }
             changesetRefsWithProjectRefs.get(projectRef).add(changesetRef);
 
@@ -74,7 +88,7 @@ public class RallyService implements AlmConnector {
                 String fileName = filenameAndAction.filename;
                 String fileType = filenameAndAction.action.getName();
                 String revision = details.getRevision();
-                String fileUri = this.scmConnector.getFileUriFor(revision, fileName);
+                String fileUri = this.scmConnector.getFileUriFor(rallyConfiguration.getScmName(), revision, fileName);
 
                 this.rallyConnector.createChange(changesetRef, fileName, fileType, fileUri);
             }
@@ -103,6 +117,7 @@ public class RallyService implements AlmConnector {
                         details.getBuildUrl());
             }
         }
+        return involvedArtifacts;
     }
 
     public void updateRallyTaskDetails(RallyUpdateData details) throws RallyException {
@@ -111,7 +126,7 @@ public class RallyService implements AlmConnector {
         }
 
         for (RallyUpdateData.RallyId id : details.getIds()) {
-            String storyRef = this.rallyConnector.queryForStory(id.getName());
+            String storyRef = this.rallyConnector.queryForStory(id.getName()).getRef();
             RallyQueryBuilder.RallyQueryResponseObject taskObject = getTaskObjectByStoryRef(details, storyRef);
 
             RallyUpdateBean updateInfo = new RallyUpdateBean();

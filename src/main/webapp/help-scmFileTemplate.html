@@ -5,7 +5,7 @@
 
     <p>
         If you have a web-accessible repository browser and wish to deeply link into that system with
-        files linked in Rally Changes, use the <kbd>${revision}</kbd> and <kbd>${file}</kbd> variables to do so.
+        files linked in Rally Changes, use the <kbd>${repository}</kbd>, <kbd>${revision}</kbd> and <kbd>${file}</kbd> variables to do so.
     </p>
 
     <p>
@@ -13,4 +13,10 @@
         <i>http://github.com/your-name/your-project/blob/12ab34cd56ef/README.md</i> then you would set this property as:
         <kbd>http://github.com/your-name/your-project/blob/${revision}/${file}</kbd>
     </p>
+    <p>
+        Or if you defined your rallyScmName to be <i>your-name/your-project</i>, then
+        <i>http://github.com/your-name/your-project/blob/12ab34cd56ef/README.md</i> then you would set this property as:
+        <kbd>http://github.com/${repository}/blob/${revision}/${file}</kbd>
+    </p>
+
 </div>

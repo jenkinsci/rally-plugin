@@ -10,27 +10,32 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.util.Modules;
+import com.jenkins.plugins.rally.actions.RallyArtifactsAction;
 import com.jenkins.plugins.rally.config.*;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.credentials.RallyCredentials;
+import com.jenkins.plugins.rally.credentials.RallyCredentialsUIHelper;
 import com.jenkins.plugins.rally.scm.ScmConnector;
 import com.jenkins.plugins.rally.service.RallyService;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
-import hudson.model.Item;
+import hudson.model.*;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.Nonnull;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -41,7 +46,7 @@ import static com.google.common.collect.Lists.newArrayList;
  * @author Tushar Shinde
  * @author R. Michael Rogers
  */
-public class RallyPlugin extends Publisher {
+public class RallyPlugin extends Publisher implements SimpleBuildStep{
     private final RallyPluginConfiguration config;
     private RallyService rallyService;
     private ScmConnector jenkinsConnector;
@@ -79,18 +84,22 @@ public class RallyPlugin extends Publisher {
             }
         };
 
-        Injector injector = Guice.createInjector(Modules.override(new RallyGuiceModule()).with(module));
+        Injector injector = Guice.createInjector(Modules.override(getDescriptor().getRallyGuiceModule()).with(module));
         injector.injectMembers(this);
     }
 
     @Override
-    public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+        doPerform(run, listener);
+    }
+
+    public void doPerform(@Nonnull Run<?, ?> run, @Nonnull TaskListener listener){
         try {
             initialize();
         } catch (RallyException exception) {
             System.out.println(exception.getMessage());
             exception.printStackTrace(System.out);
-            return false;
+            return;
         }
 
         boolean shouldBuildSucceed = true;
@@ -98,17 +107,18 @@ public class RallyPlugin extends Publisher {
 
         List<RallyUpdateData> detailsList;
         try {
-            detailsList = this.jenkinsConnector.getChanges(build, out);
+            detailsList = this.jenkinsConnector.getChanges(run, out);
         } catch (RallyException exception) {
             out.println("Unable to retrieve SCM changes from Jenkins: " + exception.getMessage());
-            return false;
+            return;
         }
 
+        RallyArtifactsAction rallyArtifactsAction = new RallyArtifactsAction();
         for (RallyUpdateData details : detailsList) {
             try {
-                this.rallyService.updateChangeset(details);
+                rallyArtifactsAction.addRallyArtifacts(this.rallyService.updateChangeset(details));
             } catch (Exception e) {
-                out.println("\trally update plug-in error: could not update changeset entry: " + e.getMessage());
+                out.println("\trally update plug-in error: could not update changeset entry: " + e.getClass().getName() + " " + e.getMessage());
                 e.printStackTrace(out);
                 shouldBuildSucceed = false;
             }
@@ -116,7 +126,7 @@ public class RallyPlugin extends Publisher {
             try {
                 this.rallyService.updateRallyTaskDetails(details);
             } catch (Exception e) {
-                out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getMessage());
+                out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getClass().getName() + " " + e.getMessage());
                 e.printStackTrace(out);
                 shouldBuildSucceed = false;
             }
@@ -125,14 +135,19 @@ public class RallyPlugin extends Publisher {
                 out.println("Could not update rally due to absence of id in a comment " + details.getMsg());
             }
         }
+        if(!rallyArtifactsAction.getRallyArtifacts().isEmpty()){
+            run.addAction(rallyArtifactsAction);
+        }
 
         try {
             this.rallyService.closeConnection();
         } catch (RallyException exception) {
             // Ignore
         }
+        if (!shouldBuildSucceed) {
+            run.setResult(Result.FAILURE);
+        }
 
-        return shouldBuildSucceed;
     }
 
     @Inject
@@ -196,6 +211,19 @@ public class RallyPlugin extends Publisher {
 
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        // for testing purpose
+        private transient RallyGuiceModule rallyGuiceModule;
+
+        public DescriptorImpl(){
+            this.rallyGuiceModule = new RallyGuiceModule();
+        }
+
+        public RallyGuiceModule getRallyGuiceModule(){
+            return rallyGuiceModule;
+        }
+        public void setRallyGuiceModule(RallyGuiceModule rallyGuiceModule){
+            this.rallyGuiceModule = rallyGuiceModule;
+        }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // Indicates that this builder can be used with all kinds of project types
@@ -205,6 +233,7 @@ public class RallyPlugin extends Publisher {
         /**
          * This get displayed at 'Add build step' button.
          */
+        @Override
         public String getDisplayName() {
             return "Update Rally Task and ChangeSet";
         }
@@ -213,21 +242,7 @@ public class RallyPlugin extends Publisher {
         @SuppressWarnings("unused") // used by stapler
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Jenkins context,
                                                      @QueryParameter String remoteBase) {
-            if (context == null || !context.hasPermission(Item.CONFIGURE)) {
-                return new StandardListBoxModel();
-            }
-
-            List<DomainRequirement> domainRequirements = newArrayList();
-            return new StandardListBoxModel()
-                    .withEmptySelection()
-                    .withMatching(
-                            CredentialsMatchers.anyOf(
-                                    CredentialsMatchers.instanceOf(RallyCredentials.class)),
-                            CredentialsProvider.lookupCredentials(
-                                    StandardCredentials.class,
-                                    context,
-                                    ACL.SYSTEM,
-                                    domainRequirements));
+            return RallyCredentialsUIHelper.doFillCredentialsIdItems(context, remoteBase);
         }
     }
 }
