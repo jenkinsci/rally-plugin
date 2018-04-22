@@ -35,4 +35,16 @@ public class RallyArtifact implements Serializable{
         return RallyGeneralUtils.isStory(name);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(obj == null) return false;
+        if(!(obj instanceof RallyArtifact)) return false;
+        RallyArtifact other = (RallyArtifact)obj;
+        return this.formattedID.equals((other.formattedID));
+    }
+
+    @Override
+    public int hashCode() {
+        return this.formattedID.hashCode();
+    }
 }

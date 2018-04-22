@@ -11,16 +11,16 @@ import org.kohsuke.stapler.export.ExportedBean;
 
 import javax.annotation.CheckForNull;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @ExportedBean
 public class RallyArtifactsAction implements Action, Serializable {
     private static final long serialVersionUID = 1L;
 
-    private final List<RallyArtifact> rallyArtifacts = new ArrayList<>();
+    private final Set<RallyArtifact> rallyArtifacts = new HashSet<>();
 
     public RallyArtifactsAction(){}
 
@@ -28,8 +28,8 @@ public class RallyArtifactsAction implements Action, Serializable {
         rallyArtifacts.addAll(artifacts);
     }
 
-    public List<RallyArtifact> getRallyArtifacts() {
-        return Collections.unmodifiableList(rallyArtifacts);
+    public Collection<RallyArtifact> getRallyArtifacts() {
+        return Collections.unmodifiableSet(rallyArtifacts);
     }
 
     @Override
