@@ -86,7 +86,7 @@ public class RallyBuildStatusStepTest {
     }
 
     @Test
-    public void testSomething() throws Exception{
+    public void shouldDetectRallyArtifactsUsingPipeline() throws Exception{
         File root = tmp.getRoot();
         File jenkinsFile = new File(root, "Jenkinsfile");
         Files.write(jenkinsFile.toPath(), Arrays.asList(
