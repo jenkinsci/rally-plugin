@@ -6,16 +6,18 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TemplatedUriResolver {
-    public String resolveCommitUri(String uriTemplate, String revision) {
+    public String resolveCommitUri(String uriTemplate, String repository, String revision) {
         Map<String, String> values = new HashMap<String, String>();
         values.put("revision", revision);
+        values.put("repository", repository);
 
         StrSubstitutor substitutor = new StrSubstitutor(values, "${", "}");
         return substitutor.replace(uriTemplate);
     }
 
-    public String resolveFileCommitUri(String uriTemplate, String revision, String filename) {
+    public String resolveFileCommitUri(String uriTemplate, String repository, String revision, String filename) {
         Map<String, String> values = new HashMap<String, String>();
+        values.put("repository", repository);
         values.put("revision", revision);
         values.put("file", filename);
 

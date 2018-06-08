@@ -5,7 +5,7 @@
 
     <p>
         If you have a web-accessible repository browser and wish to deeply link into that system with
-        commits linked in Rally Changesets, use the <kbd>${revision}</kbd> variable to do so.
+        commits linked in Rally Changesets, use the <kbd>${revision}</kbd> and <kbd>${repiository}</kbd> variables to do so.
     </p>
 
     <p>
@@ -13,4 +13,10 @@
         <i>http://github.com/your-name/your-project/commits/12ab34cd56ef</i> then you would set this property as:
         <kbd>http://github.com/your-name/your-project/commits/${revision}</kbd>
     </p>
+    <p>
+        Or if you defined your rallyScmName to be <i>your-name/your-project</i>, then
+        <i>http://github.com/your-name/your-project/commits/12ab34cd56ef</i> then you would set this property as:
+        <kbd>http://github.com/${repository}/commits/${revision}</kbd>
+    </p>
+
 </div>

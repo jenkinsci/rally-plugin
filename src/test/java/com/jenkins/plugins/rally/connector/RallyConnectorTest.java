@@ -97,7 +97,7 @@ public class RallyConnectorTest {
         when(response.getResults()).thenReturn(createJsonArrayWithRef("_ref"));
         when(this.rallyRestApi.query(requestCaptor.capture())).thenReturn(response);
 
-        String ref = this.connector.queryForStory("US12345");
+        String ref = this.connector.queryForStory("US12345").getRef();
 
         String expectedFilterString = new QueryFilter("FormattedID", "=", "US12345").toString();
         assertThat(requestCaptor.getValue().getQueryFilter().toString(), is(equalTo(expectedFilterString)));
@@ -113,7 +113,7 @@ public class RallyConnectorTest {
         when(response.getResults()).thenReturn(createJsonArrayWithRef("_ref"));
         when(this.rallyRestApi.query(requestCaptor.capture())).thenReturn(response);
 
-        String ref = this.connector.queryForDefect("DE12345");
+        String ref = this.connector.queryForDefect("DE12345").getRef();
 
         String expectedFilterString = new QueryFilter("FormattedID", "=", "DE12345").toString();
         assertThat(requestCaptor.getValue().getQueryFilter().toString(), is(equalTo(expectedFilterString)));
@@ -172,7 +172,7 @@ public class RallyConnectorTest {
         when(response.wasSuccessful()).thenReturn(true);
         when(this.rallyRestApi.create(createCaptor.capture())).thenReturn(response);
 
-        String ref = this.connector.createChangeset("_ref", "revision", "uri", "commitTimestamp", "message", "artifactRef");
+        String ref = this.connector.createChangeset("_ref", "revision", "uri", "commitTimestamp", "message", "artifactRef", "authorRef");
 
         assertThat(ref, is(equalTo("_ref")));
 
@@ -191,7 +191,7 @@ public class RallyConnectorTest {
         when(response.wasSuccessful()).thenReturn(false);
         when(this.rallyRestApi.create(any(CreateRequest.class))).thenReturn(response);
 
-        this.connector.createChangeset(null, null, null, null, null, null);
+        this.connector.createChangeset(null, null, null, null, null, null, null);
     }
 
     @Test
@@ -380,8 +380,8 @@ public class RallyConnectorTest {
 
         String json = createCaptor.getValue().getBody();
         assertThat(json, hasJsonPathValue("$.Build.BuildDefinition", "_buildDefinitionRef"));
-        assertThat(json, hasJsonPathValue("$.Build.Changesets[0]", "_changesetRef1"));
-        assertThat(json, hasJsonPathValue("$.Build.Changesets[1]", "_changesetRef2"));
+        assertThat(json, hasJsonPathValue("$.Build.Changesets[0]._ref", "_changesetRef1"));
+        assertThat(json, hasJsonPathValue("$.Build.Changesets[1]._ref", "_changesetRef2"));
         assertThat(json, hasJsonPathValue("$.Build.Number", "123"));
         assertThat(json, hasJsonPathValue("$.Build.Duration", 0.123));
         assertThat(json, hasJsonPathValue("$.Build.Start", "2015-01-01T00:00:00.000Z"));

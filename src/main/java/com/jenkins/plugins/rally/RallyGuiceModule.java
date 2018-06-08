@@ -25,9 +25,13 @@ public class RallyGuiceModule extends AbstractModule {
 
         bind(RallyConnector.FactoryHelper.class).in(Singleton.class);
 
-        bind(RallyConnector.class).in(Singleton.class);
         bind(RallyService.class).in(Singleton.class);
 
         bind(ScmConnector.class).to(JenkinsConnector.class).in(Singleton.class);
+        bindRallyConnector();
+    }
+
+    protected void bindRallyConnector(){
+        bind(RallyConnector.class).in(Singleton.class);
     }
 }

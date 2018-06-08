@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+    <ul>
+    <j:forEach var="rallyArtifact" items="${it.rallyArtifacts}">
+        <li><p><a target="_blank" href="https://rally1.rallydev.com/#/search?keywords=${rallyArtifact.formattedID}">${rallyArtifact.formattedID}</a>: ${rallyArtifact.name}</p></li>
+    </j:forEach>
+    </ul>
+</j:jelly>

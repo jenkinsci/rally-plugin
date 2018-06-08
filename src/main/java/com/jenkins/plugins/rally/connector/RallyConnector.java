@@ -3,6 +3,7 @@ package com.jenkins.plugins.rally.connector;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import com.jenkins.plugins.rally.RallyArtifact;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.RallyConfiguration;
 import com.jenkins.plugins.rally.utils.RallyCreateBuilder;
@@ -13,6 +14,7 @@ import com.rallydev.rest.request.GetRequest;
 import com.rallydev.rest.request.UpdateRequest;
 import com.rallydev.rest.response.GetResponse;
 import com.rallydev.rest.response.UpdateResponse;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.net.URI;
@@ -78,11 +80,22 @@ public class RallyConnector {
         }
     }
 
-    public String queryForStory(String formattedId) throws RallyException {
+    public RallyArtifact queryForStory(String formattedId) throws RallyException {
         return this.queryForWorkItem("HierarchicalRequirement", formattedId);
     }
-    public String queryForDefect(String formattedId) throws RallyException {
+    public RallyArtifact queryForDefect(String formattedId) throws RallyException {
         return this.queryForWorkItem("Defect", formattedId);
+    }
+
+    public String queryForUserByNameOrMail(String name, String mail) throws RallyException{
+        return RallyQueryBuilder
+                .createQueryFrom(this.rallyRestApi)
+                .ofType("User")
+                .inWorkspace(this.rallyConfiguration.getWorkspaceName())
+                .withFetchValues("DisplayName", "Actuals", "State")
+                .withQueryFilter("DisplayName", "=", name)
+                .orQueryFilter("EmailAddress", "=", mail)
+                .andExecuteReturningRef();
     }
 
     public RallyQueryBuilder.RallyQueryResponseObject queryForTaskByIndex(String storyRef, Integer index) throws RallyException {
@@ -107,14 +120,14 @@ public class RallyConnector {
                 .andExecuteReturningObject();
     }
 
-    private String queryForWorkItem(String workItemType, String formattedId) throws RallyException {
+    private RallyArtifact queryForWorkItem(String workItemType, String formattedId) throws RallyException {
         return RallyQueryBuilder
                 .createQueryFrom(this.rallyRestApi)
                 .ofType(workItemType)
                 .inWorkspace(this.rallyConfiguration.getWorkspaceName())
                 .withFetchValues("FormattedID", "Name", "Changesets")
                 .withQueryFilter("FormattedID", "=", formattedId)
-                .andExecuteReturningRef();
+                .andExecuteReturningRallyArtifact();
     }
 
     public String queryForRepository() throws RallyException {
@@ -127,8 +140,8 @@ public class RallyConnector {
                 .andExecuteReturningRef();
     }
 
-    public String createChangeset(String scmRepositoryRef, String revision, String uri, String commitTimestamp, String message, String artifactRef) throws RallyException{
-        return RallyCreateBuilder
+    public String createChangeset(String scmRepositoryRef, String revision, String uri, String commitTimestamp, String message, String artifactRef, String authorRef) throws RallyException{
+        RallyCreateBuilder rallyCreateBuilder = RallyCreateBuilder
                 .createObjectWith(this.rallyRestApi)
                 .withReference("SCMRepository",
                         thatReferencesObject()
@@ -138,8 +151,15 @@ public class RallyConnector {
                 .andProperty("CommitTimestamp", commitTimestamp)
                 .andProperty("Message", message)
                 .andArrayContaining(anObjectWithProperty("_ref", artifactRef)
-                        .withName("Artifacts"))
-                .andExecuteReturningRefFor("Changeset");
+                        .withName("Artifacts"));
+
+                if(!StringUtils.isEmpty(authorRef)){
+                    rallyCreateBuilder = rallyCreateBuilder.withReference("Author",
+                            thatReferencesObject()
+                        .withPropertyAndValue("_ref", authorRef)
+                    );
+                }
+                return rallyCreateBuilder.andExecuteReturningRefFor("Changeset");
 
     }
 
@@ -206,7 +226,7 @@ public class RallyConnector {
         return RallyCreateBuilder
                 .createObjectWith(this.rallyRestApi)
                 .andProperty("BuildDefinition", buildDefinitionRef)
-                .andPropertyContainingArray("Changesets", changesetRefs)
+                .andPropertyContainingRefArray("Changesets", changesetRefs)
                 .andProperty("Number", number)
                 .andProperty("Duration", duration)
                 .andProperty("Start", start)

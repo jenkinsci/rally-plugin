@@ -3,6 +3,7 @@ package com.jenkins.plugins.rally.utils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import com.jenkins.plugins.rally.RallyArtifact;
 import com.jenkins.plugins.rally.RallyAssetNotFoundException;
 import com.jenkins.plugins.rally.RallyException;
 import com.rallydev.rest.RallyRestApi;
@@ -79,8 +80,31 @@ public class RallyQueryBuilder {
         }
     }
 
+    public RallyArtifact andExecuteReturningRallyArtifact() throws RallyException {
+        try {
+            QueryResponse scmQueryResponse = this.rallyRestApi.query(this.query);
+
+            if (scmQueryResponse.getTotalResultCount() == 0) {
+                throw new RallyAssetNotFoundException();
+            }
+            JsonObject jsonObject = scmQueryResponse.getResults().get(0).getAsJsonObject();
+            String ref = jsonObject.get("_ref").getAsString();
+            String formattedID = jsonObject.get("FormattedID") != null ? jsonObject.get("FormattedID").getAsString() : null;
+            String name = jsonObject.get("Name") != null ? jsonObject.get("Name").getAsString() : null;
+            return new RallyArtifact(ref, formattedID, name);
+
+        } catch (IOException exception) {
+            throw new RallyException(exception);
+        }
+    }
+
     public RallyQueryBuilder andQueryFilter(String field, String operator, String value) {
         this.query.setQueryFilter(this.query.getQueryFilter().and(new QueryFilter(field, operator, value)));
+        return this;
+    }
+
+    public RallyQueryBuilder orQueryFilter(String field, String operator, String value) {
+        this.query.setQueryFilter(this.query.getQueryFilter().or(new QueryFilter(field, operator, value)));
         return this;
     }
 

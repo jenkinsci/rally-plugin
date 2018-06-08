@@ -1,17 +1,17 @@
 package com.jenkins.plugins.rally.scm;
 
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
-
 import com.google.inject.Inject;
 import com.jenkins.plugins.rally.RallyException;
 import com.jenkins.plugins.rally.config.BuildConfiguration;
 import com.jenkins.plugins.rally.config.ScmConfiguration;
 import com.jenkins.plugins.rally.connector.RallyUpdateData;
 import com.jenkins.plugins.rally.utils.CommitMessageParser;
+import com.jenkins.plugins.rally.utils.RallyGeneralUtils;
 import com.jenkins.plugins.rally.utils.TemplatedUriResolver;
-import hudson.model.AbstractBuild;
+import edu.umd.cs.findbugs.annotations.SuppressWarnings;
 import hudson.model.Result;
 import hudson.model.Run;
+import hudson.model.User;
 import hudson.scm.ChangeLogSet;
 import org.joda.time.DateTime;
 
@@ -35,15 +35,15 @@ public class JenkinsConnector implements ScmConnector {
         this.buildConfig = buildConfig;
     }
 
-    public List<RallyUpdateData> getChanges(AbstractBuild build, PrintStream out) throws RallyException {
+    public List<RallyUpdateData> getChanges(Run<?, ?> run, PrintStream out) throws RallyException {
         Changes changes;
         // TODO: if a third is added it might be time to inheritance it up
         switch (this.buildConfig.getCaptureRangeAsEnum()) {
             case SinceLastBuild:
-                changes = getChangesSinceLastBuild(build);
+                changes = getChangesSinceLastBuild(run);
                 break;
             case SinceLastSuccessfulBuild:
-                changes = getChangesSinceLastSuccessfulBuild(build);
+                changes = getChangesSinceLastSuccessfulBuild(run);
                 break;
             default:
                 throw new RallyException("Looking at invalid capture range");
@@ -53,22 +53,22 @@ public class JenkinsConnector implements ScmConnector {
         for (ChangeInformation info : changes.getChangeInformation()) {
             for (Object item : info.getChangeLogSet().getItems()) {
                 ChangeLogSet.Entry entry = (ChangeLogSet.Entry) item;
-                detailsBeans.add(createRallyDetailsDTO(info, entry, build, out));
+                detailsBeans.add(createRallyDetailsDTO(info, entry, run, out));
             }
         }
 
         return detailsBeans;
     }
 
-    private Changes getChangesSinceLastBuild(AbstractBuild build) {
-        Run run = build.getPreviousBuild();
-        return new Changes(build, run != null ? run.getNumber() + 1 : build.getNumber());
+    private Changes getChangesSinceLastBuild(Run<?, ?> run) {
+        Run pvsRun = run.getPreviousBuild();
+        return new Changes(run, pvsRun != null ? pvsRun.getNumber() + 1 : run.getNumber());
     }
 
     @SuppressWarnings(
             value = "NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",
             justification = "I believe findbugs to be in error on this one")
-    private Changes getChangesSinceLastSuccessfulBuild(AbstractBuild build) {
+    private Changes getChangesSinceLastSuccessfulBuild(Run<?, ?> build) {
         Run run = build.getPreviousBuild();
         while (run != null && (run.getResult() == null || run.getResult().isWorseThan(Result.SUCCESS)))
             run = run.getPreviousBuild();
@@ -82,7 +82,7 @@ public class JenkinsConnector implements ScmConnector {
     private RallyUpdateData createRallyDetailsDTO(
             ChangeInformation changeInformation,
             ChangeLogSet.Entry changeLogEntry,
-            AbstractBuild build,
+            Run<?, ?> build,
             PrintStream out) {
         String message = changeLogEntry.getMsg();
         RallyUpdateData details = CommitMessageParser.parse(message);
@@ -92,20 +92,31 @@ public class JenkinsConnector implements ScmConnector {
         details.setFilenamesAndActions(getFileNameAndTypes(changeLogEntry));
         details.setOut(out);
         details.setBuildDuration((DateTime.now().getMillis() - build.getStartTimeInMillis()) / 1000D);
-        details.setBuildName(build.getProject().getName());
+        details.setBuildName(build.getParent().getName());
         try {
             details.setBuildUrl(build.getAbsoluteUrl());
         } catch (Exception exception) {
             // thrown if user hasn't configured jenkins root url; can ignore
         }
         details.setRevision(changeLogEntry.getCommitId());
-        details.setBuildStatus(build.getResult().toString());
-        details.setBuildMessage("build for " + details.getBuildName() + " finished with status: " + details.getBuildStatus());
+        // if no result is found, it means that it is in progress. will set it to success, since it did not fail
+        String jenkinsResult = build.getResult() != null ? build.getResult().toString() : "SUCCESS";
+        details.setBuildStatus(RallyGeneralUtils.jenkinsResultToRallyBuildResult(jenkinsResult));
+        details.setBuildMessage("build for " + details.getBuildName() + " finished with status: " + jenkinsResult);
 
         if (changeLogEntry.getTimestamp() == -1) {
             details.setTimeStamp(changeInformation.getBuildTimeStamp());
         } else {
             details.setTimeStamp(toTimeZoneTimeStamp(changeLogEntry.getTimestamp()));
+        }
+
+        User jenkinsAuthor = changeLogEntry.getAuthor();
+        if(jenkinsAuthor != null) {
+            String authorFullName = jenkinsAuthor.getFullName();
+            hudson.tasks.Mailer.UserProperty authorMailProperty = jenkinsAuthor.getProperty(hudson.tasks.Mailer.UserProperty.class);
+            String authorMaillAddress = authorMailProperty != null ? authorMailProperty.getAddress() : null;
+            details.setAuthorFullName(authorFullName);
+            details.setAuthorEmailAddress(authorMaillAddress);
         }
 
         return details;
@@ -139,11 +150,11 @@ public class JenkinsConnector implements ScmConnector {
         return df.format(new Date(time));
     }
 
-    public String getRevisionUriFor(String revision) {
-        return this.uriResolver.resolveCommitUri(this.config.getCommitTemplate(), revision);
+    public String getRevisionUriFor(String repository, String revision) {
+        return this.uriResolver.resolveCommitUri(this.config.getCommitTemplate(), repository, revision);
     }
 
-    public String getFileUriFor(String revision, String filename) {
-        return this.uriResolver.resolveFileCommitUri(this.config.getFileTemplate(), revision, filename);
+    public String getFileUriFor(String repository, String revision, String filename) {
+        return this.uriResolver.resolveFileCommitUri(this.config.getFileTemplate(), repository, revision, filename);
     }
 }

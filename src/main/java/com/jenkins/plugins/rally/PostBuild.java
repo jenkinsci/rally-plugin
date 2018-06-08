@@ -72,6 +72,7 @@ public class PostBuild {
     /**
      * Called when this is read from persisted form.
      * Create equivalent {@link RallyPlugin} instance.
+     * @return RallyPlugin
      */
     public RallyPlugin readResolve() {
         try {

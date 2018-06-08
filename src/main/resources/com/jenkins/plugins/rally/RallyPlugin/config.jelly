@@ -29,11 +29,11 @@
         <f:checkbox value="${it.shouldCreateIfAbsent}"/>
     </f:entry>
 
-    <f:entry title="Commit URI" field="scmCommitTemplate">
+    <f:entry title="Commit URI" field="scmCommitTemplate" help="/plugin/rally-plugin/help-scmCommitTemplate.html">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="File URI" field="scmFileTemplate">
+    <f:entry title="File URI" field="scmFileTemplate" help="/plugin/rally-plugin/help-scmFileTemplate.html">
         <f:textbox/>
     </f:entry>
 
@@ -65,4 +65,8 @@
     <f:entry title="Capture Build Status in Rally?" field="shouldCaptureBuildStatus">
         <f:checkbox value="${it.shouldCaptureBuildStatus}"/>
     </f:entry>
+    <f:entry title="Fail on Errors" field="failOnErrors">
+        <f:checkbox value="${it.failOnErrors}"/>
+    </f:entry>
+
 </j:jelly>

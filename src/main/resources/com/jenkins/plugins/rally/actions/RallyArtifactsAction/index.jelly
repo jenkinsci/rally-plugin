@@ -1,0 +1,22 @@
+<?jelly escape-by-default='true'?>
+<j:jelly
+    xmlns:j="jelly:core"
+    xmlns:st="jelly:stapler"
+    xmlns:d="jelly:define"
+    xmlns:l="/lib/layout"
+    xmlns:t="/lib/hudson"
+    xmlns:f="/lib/form"
+    xmlns:rl="/com/jenkins/plugins/rally/actions">
+	<l:layout title="Rally Artifacts">
+		<j:set var="build" value="${it.owningRun}"/>
+		<j:if test="${build!=null}">
+			<st:include page="sidepanel" it="${build}" optional="true"/>
+		</j:if>
+	<l:main-panel>
+	<h1>Rally Artifacts</h1>
+
+    <rl:artifactList/>
+
+	</l:main-panel>
+  	</l:layout>
+</j:jelly>

@@ -71,4 +71,15 @@ public class RallyCreateBuilder {
 
         return this;
     }
+
+    public RallyCreateBuilder andPropertyContainingRefArray(String name, List<String> values) {
+        JsonArray array = new JsonArray();
+        for (String value : values) {
+            array.add(new JsonElementBuilder().withPropertyAndValue("_ref", value).build());
+        }
+
+        this.createObject.add(name, array);
+
+        return this;
+    }
 }
