@@ -65,4 +65,8 @@
     <f:entry title="Capture Build Status in Rally?" field="shouldCaptureBuildStatus">
         <f:checkbox value="${it.shouldCaptureBuildStatus}"/>
     </f:entry>
+    <f:entry title="Fail on Errors" field="failOnErrors">
+        <f:checkbox value="${it.failOnErrors}"/>
+    </f:entry>
+
 </j:jelly>

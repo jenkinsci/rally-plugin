@@ -51,6 +51,11 @@
         <f:entry title="Capture Build Status in Rally?" field="shouldCaptureBuildStatus">
             <f:checkbox/>
         </f:entry>
+
+        <f:entry title="Fail on Errors" field="failOnErrors">
+            <f:checkbox value="${it.failOnErrors}"/>
+        </f:entry>
+
     </f:section>
 
 

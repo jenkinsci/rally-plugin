@@ -33,6 +33,7 @@ public class RallyGlobalConfiguration extends GlobalConfiguration{
     private String buildCaptureRange;
     private String advancedProxyUri;
     private String shouldCaptureBuildStatus = String.valueOf(true);
+    private String failOnErrors = String.valueOf(false);
 
     public RallyGlobalConfiguration(){
         load();
@@ -112,6 +113,15 @@ public class RallyGlobalConfiguration extends GlobalConfiguration{
     public void setShouldCaptureBuildStatus(String shouldCaptureBuildStatus) {
         this.shouldCaptureBuildStatus = shouldCaptureBuildStatus;
         save();
+    }
+
+    public void setFailOnErrors(String failOnErrors) {
+        this.failOnErrors = failOnErrors;
+        save();
+    }
+
+    public String getFailOnErrors() {
+        return failOnErrors;
     }
 
     @SuppressWarnings("unused") // used by stapler

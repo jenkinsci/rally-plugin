@@ -33,6 +33,7 @@ public class RallyBuildStatusStep extends Step {
     private String buildCaptureRange;
     private String advancedProxyUri;
     private Boolean shouldCaptureBuildStatus;
+    private Boolean failOnErrors;
 
     @DataBoundConstructor
     public RallyBuildStatusStep(){
@@ -120,6 +121,15 @@ public class RallyBuildStatusStep extends Step {
         this.shouldCaptureBuildStatus = shouldCaptureBuildStatus;
     }
 
+    @DataBoundSetter
+    public void setFailOnErrors(Boolean failOnErrors) {
+        this.failOnErrors = failOnErrors;
+    }
+
+    public Boolean isFailOnErrors(){
+        return this.failOnErrors;
+    }
+
     @Override
     public StepExecution start(StepContext stepContext){
         return new Execution(stepContext, this);
@@ -180,6 +190,7 @@ public class RallyBuildStatusStep extends Step {
             String buildCaptureRange = StringUtils.isEmpty(step.getBuildCaptureRange()) ? globalConfiguration.getBuildCaptureRange() : step.getBuildCaptureRange();
             String advancedProxyUri = StringUtils.isEmpty(step.getAdvancedProxyUri()) ? globalConfiguration.getAdvancedProxyUri() : step.getAdvancedProxyUri();
             boolean shouldCaptureBuildStatus = step.isShouldCaptureBuildStatus() == null ? "true".equals(globalConfiguration.getShouldCaptureBuildStatus()) : step.isShouldCaptureBuildStatus();
+            boolean failOnErrors = step.isFailOnErrors() == null ? "true".equals(globalConfiguration.getFailOnErrors()) : step.isFailOnErrors();
 
             RallyPlugin plugin = getRallyPlugin(
                 credentialsId,
@@ -192,6 +203,7 @@ public class RallyBuildStatusStep extends Step {
                 advancedProxyUri,
                 shouldCaptureBuildStatus
             );
+            plugin.setFailOnErrors(failOnErrors);
 
             plugin.doPerform(run, taskListener);
 

@@ -2,9 +2,6 @@ package com.jenkins.plugins.rally;
 
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -20,7 +17,10 @@ import com.jenkins.plugins.rally.service.RallyService;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractProject;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.security.ACL;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
@@ -28,19 +28,16 @@ import hudson.tasks.Publisher;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.util.List;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 /**
  * @author Tushar Shinde
@@ -51,6 +48,7 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
     private RallyService rallyService;
     private ScmConnector jenkinsConnector;
     private String credentialsId;
+    private boolean failOnErrors;
 
     @DataBoundConstructor
     public RallyPlugin(String credentialsId, String rallyWorkspaceName, String rallyScmName, String shouldCreateIfAbsent, String scmCommitTemplate, String scmFileTemplate, String buildCaptureRange, String advancedProxyUri, String shouldCaptureBuildStatus) throws RallyException, URISyntaxException {
@@ -62,6 +60,15 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
         AdvancedConfiguration advanced = new AdvancedConfiguration(advancedProxyUri, shouldCaptureBuildStatus);
 
         this.config = new RallyPluginConfiguration(rally, scm, build, advanced);
+    }
+
+    @DataBoundSetter
+    public void setFailOnErrors(boolean failOnErrors) {
+        this.failOnErrors = failOnErrors;
+    }
+
+    public boolean isFailOnErrors() {
+        return failOnErrors;
     }
 
     private String getRallyCredentials(String credentialsId) {
@@ -89,7 +96,7 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
     }
 
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) {
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         doPerform(run, listener);
     }
 
@@ -104,7 +111,6 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
 
         boolean shouldBuildSucceed = true;
         PrintStream out = listener.getLogger();
-
         List<RallyUpdateData> detailsList;
         try {
             detailsList = this.jenkinsConnector.getChanges(run, out);
@@ -122,13 +128,14 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
                 e.printStackTrace(out);
                 shouldBuildSucceed = false;
             }
-
-            try {
-                this.rallyService.updateRallyTaskDetails(details);
-            } catch (Exception e) {
-                out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getClass().getName() + " " + e.getMessage());
-                e.printStackTrace(out);
-                shouldBuildSucceed = false;
+            if(shouldBuildSucceed) {
+                try {
+                    this.rallyService.updateRallyTaskDetails(details);
+                } catch (Exception e) {
+                    out.println("\trally update plug-in error: could not update TaskDetails entry: " + e.getClass().getName() + " " + e.getMessage());
+                    e.printStackTrace(out);
+                    shouldBuildSucceed = false;
+                }
             }
 
             if (details.getIds().size() == 0) {
@@ -144,8 +151,9 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
         } catch (RallyException exception) {
             // Ignore
         }
-        if (!shouldBuildSucceed) {
+        if (!shouldBuildSucceed && failOnErrors) {
             run.setResult(Result.FAILURE);
+            throw new IllegalStateException("Rally plugin has failed to update artifacts status");
         }
 
     }
@@ -193,7 +201,8 @@ public class RallyPlugin extends Publisher implements SimpleBuildStep{
     }
 
     public String getAdvancedProxyUri() {
-        return this.config.getAdvanced().getProxyUri().toString();
+        return this.config.getAdvanced().getProxyUri() != null ?
+                this.config.getAdvanced().getProxyUri().toString() : null;
     }
 
     public String getShouldCaptureBuildStatus() {
